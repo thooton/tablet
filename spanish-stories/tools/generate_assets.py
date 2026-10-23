@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 UI = ROOT / "app" / "ui"
 
 
-INK = "#111111"
+INK = "#000000"
 
 
 def dots_tile(path: Path) -> None:

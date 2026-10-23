@@ -3,11 +3,13 @@
 // Colours and measurements from the "Cuentos" mockup, in reMarkable 2
 // pixels (1404 x 1872).
 
-var paper = "#f6f5f1";
+// White paper and black text rather than the mockup's tinted #f6f5f1 and
+// grey secondary text, which e-ink shows washed out.
+var paper = "#ffffff";
 var white = "#ffffff";
-var ink = "#111111";
-var ink2 = "#444444";
-var ink3 = "#777777";
+var ink = "#000000";
+var ink2 = "#000000";
+var ink3 = "#000000";
 var rule = "#c9c8c3";
 
 var screenWidth = 1404;
