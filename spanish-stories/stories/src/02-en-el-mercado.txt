@@ -1,0 +1,32 @@
+title: En el mercado
+title_en: At the Market
+level: A1
+description: Pablo goes shopping for his grandmother and gets the list a little wrong.
+
+[Es|It is] [sábado|Saturday]. [Pablo|Pablo] [tiene|is] [diez años|ten years old] [y|and] [vive|lives] [con|with] [su abuela|his grandmother] [en|in] [Valencia|Valencia]. [Su abuela|His grandmother] [le da|gives him] [una lista|a list] [y|and] [veinte euros|twenty euros].
+
+—[Pablo|Pablo], [¿puedes|can you] [ir|go] [al mercado|to the market]? [Necesito|I need] [estas cosas|these things] [para|for] [la comida|lunch / the meal].
+
+—[¡Claro|Of course], [abuela|Grandma]! —[dice|says] [Pablo|Pablo].
+
+[En la lista|On the list] [hay|there are] [cinco|five] [cosas|things]: [un kilo de|a kilo of] [tomates|tomatoes], [dos|two] [cebollas|onions], [una barra de pan|a loaf of bread / a baguette], [seis|six] [huevos|eggs] [y|and] [un poco de|a little] [queso|cheese].
+
+[El mercado|The market] [está|is] [lleno de|full of] [gente|people] [y|and] [de|of] [colores|colours]. [Hay|There are] [naranjas|oranges], [plátanos|bananas], [pescado|fish] [fresco|fresh] [y|and] [flores|flowers]. [Pablo|Pablo] [va|goes] [primero|first] [a la frutería|to the fruit stall / to the greengrocer].
+
+—[Buenos días|Good morning]. [Quiero|I want / I would like] [un kilo de|a kilo of] [tomates|tomatoes], [por favor|please].
+
+—[Aquí tienes|Here you are]. [Son|That's] [dos euros|two euros] —[dice|says] [la frutera|the fruit seller (woman)].
+
+[Después|Afterwards / Next], [Pablo|Pablo] [compra|buys] [el pan|the bread] [y|and] [los huevos|the eggs]. [Pero|But] [hay|there is] [un problema|a problem]: [Pablo|Pablo] [no encuentra|can't find] [la lista|the list]. [Busca|He looks] [en|in] [sus bolsillos|his pockets]. [Nada|Nothing]. [Busca|He looks] [en|in] [la bolsa|the bag]. [Nada|Nothing].
+
+—[¿Qué|What] [más|else] [necesita|does she need] [la abuela|Grandma]? —[piensa|he thinks]. —[Creo que|I think] [son|it's] [cebollas|onions]... [¿o|or] [son|is it] [naranjas|oranges]?
+
+[Pablo|Pablo] [compra|buys] [dos|two] [naranjas|oranges] [y|and] [un poco de|a little] [chocolate|chocolate], [porque|because] [el chocolate|chocolate] [siempre|always] [es|is] [una buena idea|a good idea].
+
+[En casa|At home], [la abuela|his grandmother] [mira|looks at] [la bolsa|the bag] [y|and] [se ríe|laughs].
+
+—[Pablo|Pablo], [¿dónde|where] [están|are] [las cebollas|the onions] [y|and] [el queso|the cheese]?
+
+—[Perdón|Sorry], [abuela|Grandma]. [Perdí|I lost] [la lista|the list].
+
+—[No pasa nada|It doesn't matter / No problem] —[dice|says] [ella|she]. —[Hoy|Today] [no|we won't] [comemos|eat / have] [tortilla|Spanish omelette]. [Comemos|We'll have] [pan|bread] [con|with] [tomate|tomato]... [¡y|and] [de postre|for dessert], [naranjas|oranges] [con|with] [chocolate|chocolate]!

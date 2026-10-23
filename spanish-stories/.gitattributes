@@ -1,0 +1,11 @@
+*.sh text eol=lf
+*.qml text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.go text eol=lf
+*.ttf binary
+*.png binary
+*.rcc binary
+dist/spanish-stories/app/backend/* binary
+*.zip binary
+*.gz binary

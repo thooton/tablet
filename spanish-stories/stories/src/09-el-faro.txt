@@ -1,0 +1,30 @@
+title: El faro
+title_en: The Lighthouse
+level: B1
+description: On a Galician island, the last lighthouse keeper has one final night of work.
+
+[Durante|For] [cuarenta años|forty years], [Manuel|Manuel] [había sido|had been] [el farero|the lighthouse keeper] [de|of] [una pequeña|a small] [isla|island] [frente a|off / opposite] [la costa|the coast] [de Galicia|of Galicia]. [Cada noche|Every night], [subía|he climbed / went up] [los ciento veinte|the hundred and twenty] [escalones|steps] [de|of] [la torre|the tower], [limpiaba|cleaned] [los cristales|the glass / the panes] [y|and] [se aseguraba de que|made sure that] [la luz|the light] [funcionara|was working].
+
+[Pero|But] [los tiempos|times] [habían cambiado|had changed]. [Ahora|Now] [los barcos|ships / boats] [tenían|had] [GPS|GPS], [y|and] [el faro|the lighthouse] [iba a|was going to] [funcionar|work / run] [solo|by itself / alone], [controlado|controlled] [por|by] [un ordenador|a computer] [en|in] [la ciudad|the city]. [Aquella|That] [era|was] [su última|his last] [noche|night].
+
+[Su hija|His daughter], [Ana|Ana], [había venido|had come] [en|on / by] [la barca|the boat] [del correo|mail / post] [para|to] [acompañarlo|keep him company]. [Cenaron|They had dinner] [sardinas|sardines] [y|and] [pan|bread] [en|in] [la pequeña|the little] [cocina|kitchen], [mientras|while] [fuera|outside] [el viento|the wind] [soplaba|was blowing] [cada vez|more and more] [más fuerte|strongly].
+
+—[¿Vas a|Are you going to] [echar de menos|miss] [todo esto|all this], [papá|Dad]?
+
+[Manuel|Manuel] [miró|looked] [por|out of / through] [la ventana|the window]. [Las olas|The waves] [rompían|were breaking / crashed] [contra|against] [las rocas|the rocks].
+
+—[Echaré de menos|I'll miss] [el ruido|the noise / the sound] [del mar|of the sea]. [Y|And] [la sensación|the feeling] [de|of] [ser|being] [útil|useful].
+
+[A las dos|At two o'clock] [de la madrugada|in the early morning / at night], [la radio|the radio] [empezó a|began to / started to] [sonar|make noise / crackle]. [Era|It was] [un pesquero|a fishing boat] [pequeño|small]. [Su motor|Its engine] [se había averiado|had broken down] [y|and] [la tormenta|the storm] [lo empujaba|was pushing it] [hacia|towards] [las rocas|the rocks] [del norte|to the north / northern] [de la isla|of the island]. [Y|And] [además|what's more / besides], [su GPS|its GPS] [no funcionaba|wasn't working].
+
+[Manuel|Manuel] [no lo dudó|didn't hesitate]. [Subió|He went up] [a la torre|to the tower] [con|with] [una linterna|a flashlight / a torch] [y|and] [empezó a|began to] [hacer|make] [señales|signals] [en|in] [código Morse|Morse code], [como|as] [había aprendido|he had learned] [de joven|as a young man]. [Ana|Ana], [con|with] [la radio|the radio], [le explicaba|explained to him / told him] [al capitán|to the captain] [hacia dónde|which way / where to] [debía|he should] [girar|turn].
+
+[Durante|For] [una hora|an hour] [larga|long] [nadie|nobody] [habló|spoke]. [Por fin|Finally], [la voz|the voice] [del capitán|of the captain] [llegó|came / arrived] [por|over / through] [la radio|the radio], [cansada|tired] [pero|but] [tranquila|calm]:
+
+—[Estamos|We are] [a salvo|safe]. [Gracias|Thank you], [faro|lighthouse]. [Gracias|Thank you].
+
+[Al amanecer|At dawn], [la tormenta|the storm] [se había calmado|had calmed down]. [Manuel|Manuel] [apagó|turned off / switched off] [la luz|the light] [por última vez|for the last time] [y|and] [bajó|went down] [los escalones|the steps] [despacio|slowly]. [Ana|Ana] [lo esperaba|was waiting for him] [abajo|downstairs / below] [con|with] [dos|two] [tazas|cups] [de café|of coffee].
+
+—[Parece que|It seems that] [los ordenadores|computers] [todavía|still] [no lo saben|don't know] [todo|everything] —[dijo|said] [ella|she], [sonriendo|smiling].
+
+[Manuel|Manuel] [se sentó|sat down] [a su lado|beside her] [y|and] [miró|watched / looked at] [el mar|the sea], [ahora|now] [en calma|calm]. [Por primera vez|For the first time] [en|in] [mucho tiempo|a long time], [no tenía|he didn't have] [prisa|any hurry / to rush] [por|to] [subir|go up] [a ninguna|to any] [parte|place / anywhere].

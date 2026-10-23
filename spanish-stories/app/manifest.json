@@ -1,0 +1,8 @@
+{
+    "id": "spanish-reader",
+    "name": "Spanish Reader",
+    "entry": "/ui/main.qml",
+    "loadsBackend": true,
+    "supportsScaling": false,
+    "canHaveMultipleFrontends": false
+}

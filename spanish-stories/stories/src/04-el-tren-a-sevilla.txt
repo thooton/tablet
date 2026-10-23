@@ -1,0 +1,30 @@
+title: El tren a Sevilla
+title_en: The Train to Seville
+level: A2
+description: Lucía takes the wrong train and ends up having the best day of her trip.
+
+[Lucía|Lucía] [estudia|is studying / studies] [español|Spanish] [en|in] [Madrid|Madrid] [este verano|this summer]. [Un viernes|One Friday], [decide|she decides] [visitar|to visit] [Sevilla|Seville]. [Compra|She buys] [un billete|a ticket] [por internet|online], [prepara|packs / prepares] [una mochila|a backpack] [pequeña|small] [y|and] [se acuesta|goes to bed] [temprano|early].
+
+[A la mañana siguiente|The next morning], [la estación|the station] [está|is] [llena de|full of] [gente|people]. [Lucía|Lucía] [corre|runs], [porque|because] [ya|already] [es|it is] [tarde|late]. [Ve|She sees] [un tren|a train] [en|at] [el andén|the platform] [cinco|five] [y|and] [sube|gets on] [justo|just] [antes de que|before] [se cierren|close] [las puertas|the doors].
+
+[Se sienta|She sits down] [junto a|next to] [la ventana|the window] [y|and] [mira|looks at] [el paisaje|the landscape / the scenery]: [campos|fields] [amarillos|yellow], [olivos|olive trees] [y|and] [pueblos|villages] [blancos|white]. [Después de|After] [una hora|an hour], [pasa|comes by] [el revisor|the ticket inspector].
+
+—[Su billete|Your ticket], [por favor|please].
+
+[Lucía|Lucía] [le enseña|shows him] [el móvil|her phone]. [El revisor|The inspector] [lo mira|looks at it] [y|and] [sonríe|smiles].
+
+—[Señorita|Miss], [este|this] [tren|train] [no va|isn't going] [a Sevilla|to Seville]. [Va|It's going] [a Granada|to Granada].
+
+—[¿Cómo|What]? ¡[Oh|Oh], [no|no]! [¿Qué|What] [hago|do I do] [ahora|now]?
+
+—[No se preocupe|Don't worry]. [Puede|You can] [bajar|get off] [en|in / at] [Granada|Granada] [y|and] [mañana|tomorrow] [tomar|take] [otro|another] [tren|train]. [Además|Besides], [Granada|Granada] [es|is] [preciosa|beautiful / lovely].
+
+[Una señora|A lady] [mayor|elderly / older] [que|who] [está|is] [sentada|sitting] [enfrente|opposite / across from her] [lo ha oído|has heard it] [todo|all].
+
+—[Yo|I] [vivo|live] [en|in] [Granada|Granada] —[dice|says]. —[Si quieres|If you like / If you want], [te enseño|I'll show you] [la ciudad|the city]. [Me llamo|My name is] [Rosario|Rosario].
+
+[Esa tarde|That afternoon / That evening], [Rosario|Rosario] [lleva|takes] [a Lucía|Lucía] [a la Alhambra|to the Alhambra]. [Desde|From] [el mirador|the viewpoint], [ven|they see] [las montañas|the mountains] [de|of] [Sierra Nevada|Sierra Nevada] [con|with] [nieve|snow] [en|in] [pleno|the middle of] [verano|summer]. [Por la noche|At night], [cenan|they have dinner] [tapas|tapas] [en|in] [un bar|a bar] [pequeño|small] [del barrio|of the neighbourhood] [del Albaicín|of the Albaicín].
+
+—[¿Sabes|Do you know] [qué|what]? —[dice|says] [Lucía|Lucía] [al final|at the end] [de la noche|of the night]. —[Me equivoqué|I made a mistake / I got it wrong] [de tren|with the train], [pero|but] [hoy|today] [ha sido|has been] [el mejor día|the best day] [de mi viaje|of my trip].
+
+[Rosario|Rosario] [se ríe|laughs]. —[A veces|Sometimes], [el tren|the train] [equivocado|wrong] [te lleva|takes you] [al lugar|to the place] [correcto|right].

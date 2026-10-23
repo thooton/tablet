@@ -1,0 +1,8 @@
+IconButton 1.0 IconButton.qml
+LibraryRow 1.0 LibraryRow.qml
+MenuBox 1.0 MenuBox.qml
+MessageBox 1.0 MessageBox.qml
+Popover 1.0 Popover.qml
+ReaderBottomBar 1.0 ReaderBottomBar.qml
+ReaderTopBar 1.0 ReaderTopBar.qml
+TextSheet 1.0 TextSheet.qml

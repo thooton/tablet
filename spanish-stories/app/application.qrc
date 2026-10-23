@@ -1,0 +1,29 @@
+<RCC>
+    <qresource>
+        <file>ui/main.qml</file>
+        <file>ui/LibraryView.qml</file>
+        <file>ui/ReaderView.qml</file>
+        <file>ui/components/qmldir</file>
+        <file>ui/components/IconButton.qml</file>
+        <file>ui/components/LibraryRow.qml</file>
+        <file>ui/components/MenuBox.qml</file>
+        <file>ui/components/MessageBox.qml</file>
+        <file>ui/components/Popover.qml</file>
+        <file>ui/components/ReaderBottomBar.qml</file>
+        <file>ui/components/ReaderTopBar.qml</file>
+        <file>ui/components/TextSheet.qml</file>
+        <file>ui/js/layout.js</file>
+        <file>ui/js/theme.js</file>
+        <file>ui/images/dots.png</file>
+        <file>ui/images/back.png</file>
+        <file>ui/images/menu.png</file>
+        <file>ui/images/close.png</file>
+        <file>ui/images/grab.png</file>
+        <file>ui/fonts/NotoSerif-Regular.ttf</file>
+        <file>ui/fonts/IBMPlexSans-Regular.ttf</file>
+        <file>ui/fonts/IBMPlexSans-Medium.ttf</file>
+        <file>ui/fonts/IBMPlexSans-SemiBold.ttf</file>
+        <file>ui/fonts/IBMPlexSans-Bold.ttf</file>
+        <file>ui/fonts/AtkinsonHyperlegible-Regular.ttf</file>
+    </qresource>
+</RCC>

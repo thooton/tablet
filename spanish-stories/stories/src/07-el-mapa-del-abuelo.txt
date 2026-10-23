@@ -1,0 +1,30 @@
+title: El mapa del abuelo
+title_en: Grandfather's Map
+level: B1
+description: Clearing out their late grandfather's house, two cousins find a hand-drawn treasure map.
+
+[Cuando|When] [murió|died] [el abuelo|Grandpa / their grandfather] [Andrés|Andrés], [sus nietos|his grandchildren], [Nuria|Nuria] [y|and] [Diego|Diego], [fueron|went] [a|to] [su casa|his house] [del pueblo|in the village] [para|to] [vaciarla|empty it / clear it out]. [Era|It was] [una casa|a house] [antigua|old] [de piedra|stone / made of stone], [en|in] [las montañas|the mountains] [de Asturias|of Asturias], [donde|where] [habían pasado|they had spent] [todos los veranos|every summer] [de|of] [su infancia|their childhood].
+
+[En|In] [el desván|the attic], [entre|among / between] [cajas|boxes] [de|of] [fotos|photos] [y|and] [periódicos|newspapers] [viejos|old], [Diego|Diego] [encontró|found] [un libro|a book] [de|of / about] [poesía|poetry]. [Al abrirlo|When he opened it], [cayó|fell out] [una hoja|a sheet of paper] [doblada|folded]. [Era|It was] [un mapa|a map] [dibujado|drawn] [a mano|by hand].
+
+—[Mira|Look] [esto|at this] —[dijo|said] [Diego|Diego]. —[Es|It's] [la letra|the handwriting] [del abuelo|of Grandpa / Grandpa's].
+
+[El mapa|The map] [mostraba|showed] [el pueblo|the village], [el río|the river] [y|and] [un camino|a path] [que|that] [subía|went up / climbed] [hacia|towards] [el bosque|the forest]. [Al final del camino|At the end of the path] [había|there was] [una cruz|a cross] [y|and] [unas palabras|a few words]: «[Bajo|Under / Beneath] [el castaño|the chestnut tree] [que|that] [habla|talks / speaks]».
+
+—[¿Un castaño|A chestnut tree] [que|that] [habla|talks]? —[se rio|laughed] [Nuria|Nuria]. —[El abuelo|Grandpa] [siempre|always] [fue|was] [un poco|a bit / a little] [poeta|of a poet].
+
+[Aun así|Even so / Still], [a la mañana siguiente|the next morning] [se pusieron|they put on] [las botas|their boots] [y|and] [siguieron|followed] [el camino|the path] [del mapa|on the map]. [Cruzaron|They crossed] [el río|the river] [por|over / by] [un puente|a bridge] [de madera|wooden] [y|and] [subieron|went up / climbed] [durante|for] [más de|more than] [una hora|an hour]. [Hacía|It was] [frío|cold], [y|and] [la niebla|the fog / the mist] [cubría|covered] [los árboles|the trees].
+
+[Por fin|Finally / At last] [llegaron|they reached / they arrived at] [a|at] [un claro|a clearing] [con|with] [un castaño|a chestnut tree] [enorme|huge]. [Cuando|When] [el viento|the wind] [pasaba|blew / passed] [entre|through] [sus ramas|its branches], [las hojas|the leaves] [hacían|made] [un sonido|a sound] [extraño|strange], [casi|almost] [como|like] [una voz|a voice].
+
+—[El castaño|The chestnut tree] [que|that] [habla|talks] —[susurró|whispered] [Diego|Diego].
+
+[Cavaron|They dug] [junto a|next to / beside] [las raíces|the roots] [con|with] [las manos|their hands] [y|and] [con|with] [un palo|a stick]. [Después de|After] [un rato|a while], [tocaron|they touched / hit] [algo|something] [duro|hard]: [una caja|a box / a tin] [de metal|metal], [oxidada|rusty].
+
+[Dentro|Inside] [no había|there was no] [oro|gold] [ni|nor / or] [joyas|jewels]. [Había|There were] [cartas|letters]. [Decenas de|Dozens of] [cartas|letters], [atadas|tied] [con|with] [una cinta|a ribbon] [azul|blue]. [Eran|They were] [cartas|letters] [de amor|love] [entre|between] [el abuelo|Grandpa] [y|and] [la abuela|Grandma], [escritas|written] [cuando|when] [eran|they were] [jóvenes|young] [y|and] [él|he] [trabajaba|was working / worked] [en|in] [las minas|the mines], [lejos de|far from] [casa|home].
+
+[Encima de|On top of] [las cartas|the letters] [había|there was] [una nota|a note] [más|more] [reciente|recent]:
+
+«[Para|For / To] [mis nietos|my grandchildren]. [Este|This] [es|is] [mi tesoro|my treasure]. [Espero que|I hope that] [algún día|one day / someday] [encontréis|you (all) find] [uno|one] [igual|just like it / the same]».
+
+[Nuria|Nuria] [y|and] [Diego|Diego] [se quedaron|stayed / remained] [en silencio|in silence / silent] [mucho tiempo|a long time], [mientras|while] [el castaño|the chestnut tree] [seguía|kept on / continued] [hablando|talking] [con|with] [el viento|the wind].
