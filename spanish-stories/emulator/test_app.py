@@ -179,7 +179,7 @@ class Driver:
 
     def open_toolbar(self):
         if not self.prop(self.reader(), "toolbarOpen"):
-            self.tap_at(SCREEN_W / 2, 60)
+            self.tap_at(SCREEN_W / 2, 20)  # above the first line of text
         self.wait_until("the toolbar", lambda: self.visible("toolbar"))
 
 
@@ -374,6 +374,12 @@ def run(d: Driver):
     d.check(d.page_index() == 1, "tapping the right margin goes to page 2")
     d.check(not d.find("titleBlock").isVisible(), "no title after page 1")
     d.shot("reader-page2")
+    top = min(d.page()["segs"], key=lambda s: (s["y"], s["x"]))
+    d.tap_seg(top)
+    d.check(d.prop(reader, "selectedTok") == top["tok"] and not d.visible("toolbar"),
+            "on page 2 a word in the top line shows its translation, not the toolbar")
+    d.tap_seg(top)
+    d.check(d.prop(reader, "selectedTok") == -1, "tapping it again closes it")
     d.tap_at(40, 900)
     d.check(d.page_index() == 0, "tapping the left margin goes back")
     d.swipe(-500)

@@ -132,7 +132,13 @@ Item {
             selectedTok = other && other.tok !== selectedTok ? other.tok : -1;
             return;
         }
-        if (y < Theme.topStrip) {
+        // A word wins over the toolbar strip: after page 1 the first line of
+        // text sits inside it, so only a tap that misses every word there
+        // opens the toolbar.
+        var hit = x >= Theme.pageLeft && x < Theme.screenWidth - Theme.pageLeft ? segAt(x, y) : null;
+        if (hit) {
+            selectedTok = hit.tok;
+        } else if (y < Theme.topStrip) {
             toolbarOpen = true;
         } else if (y >= Theme.screenHeight - Theme.pageBottomStrip) {
             changeSetting("footer", !showFooter);
@@ -140,10 +146,6 @@ Item {
             goTo(pageIndex - 1);
         } else if (x >= Theme.screenWidth - Theme.pageLeft) {
             goTo(pageIndex + 1);
-        } else {
-            var hit = segAt(x, y);
-            if (hit)
-                selectedTok = hit.tok;
         }
     }
 
