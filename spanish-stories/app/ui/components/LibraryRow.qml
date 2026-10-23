@@ -1,9 +1,9 @@
 import QtQuick
 import "../js/theme.js" as Theme
 
-// One story in the library: level badge, title, one-line summary, then the
-// word count and Nuevo / a progress bar with % / Terminado. A thin rule
-// separates the rows.
+// One story in the library: title, one-line summary, then the level tag, a
+// row of dots (one per ~70 words, filled up to the reading position) and
+// the % read once the story has been opened. A thin rule separates the rows.
 Item {
     id: row
     property var story
@@ -11,9 +11,9 @@ Item {
 
     height: Theme.rowHeight
 
-    // The 133 px block (title 56 + summary 40 + 10 + meta 27) is centred in
-    // the row above its 2 px rule.
-    readonly property real blockTop: Math.round((Theme.rowHeight - 2 - 133) / 2)
+    readonly property int dotCount: Math.min(60, Math.max(6, Math.round(story.words / 70)))
+    readonly property int dotsRead: story.finished ? dotCount
+                                                   : Math.round(Math.min(1, story.progress) * dotCount)
 
     Rectangle {
         anchors.bottom: parent.bottom
@@ -22,28 +22,11 @@ Item {
         color: Theme.rule
     }
 
-    Rectangle {
-        y: row.blockTop
-        width: 108
-        height: 58
-        radius: 8
-        color: Theme.ink
-        visible: row.story.level !== ""
-        Text {
-            anchors.centerIn: parent
-            text: row.story.level
-            color: Theme.white
-            font.family: row.fonts.sansBold
-            font.weight: Font.Bold
-            font.pixelSize: 30
-            font.letterSpacing: 1.2
-        }
-    }
-
+    // The 150 px block (title 56 + summary 42 + 12 + progress 40) is centred
+    // in the row above its 2 px rule.
     Column {
-        x: 108 + 38
-        y: row.blockTop
-        width: parent.width - x
+        y: Math.round((Theme.rowHeight - 2 - 150) / 2)
+        width: parent.width
 
         Text {
             objectName: "rowTitle"
@@ -53,59 +36,73 @@ Item {
             elide: Text.ElideRight
             text: row.story.title
             color: Theme.ink
-            font.family: row.fonts.sansSemi
-            font.weight: Font.DemiBold
-            font.pixelSize: 46
+            font.family: row.fonts.sans
+            font.pixelSize: 47
         }
         Text {
             width: parent.width
-            height: 40
+            height: 42
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             text: row.story.description
             color: Theme.ink2
             font.family: row.fonts.sans
-            font.pixelSize: 28
+            font.pixelSize: 32
         }
-        Item { width: 1; height: 10 }
+        Item { width: 1; height: 12 }
         Row {
-            height: 27
-            spacing: 22
+            height: 40
+            spacing: 20
 
-            Text {
-                height: parent.height
-                verticalAlignment: Text.AlignVCenter
-                text: row.story.words + " palabras"
-                color: Theme.ink2
-                font.family: row.fonts.sans
-                font.pixelSize: 27
-            }
             Rectangle {
+                visible: row.story.level !== ""
                 anchors.verticalCenter: parent.verticalCenter
-                visible: row.story.started
-                width: 190
-                height: 14
-                radius: 7
+                width: tag.implicitWidth + 2 * 9 + 4
+                height: 23 + 6 + 5 + 4
                 color: "transparent"
                 border.width: 2
                 border.color: Theme.ink
-                Rectangle {
-                    width: parent.width * Math.min(1, row.story.progress)
-                    height: parent.height
-                    radius: 7
+                Text {
+                    id: tag
+                    x: 2 + 9
+                    y: 2 + 6
+                    height: 23
+                    verticalAlignment: Text.AlignVCenter
+                    text: row.story.level
                     color: Theme.ink
+                    font.family: row.fonts.sansBold
+                    font.weight: Font.Bold
+                    font.pixelSize: 23
+                    font.letterSpacing: 23 * 0.04
+                }
+            }
+            Row {
+                objectName: "rowDots"
+                anchors.verticalCenter: parent.verticalCenter
+                Repeater {
+                    model: row.dotCount
+                    delegate: Item {
+                        width: 15
+                        height: 10
+                        Rectangle {
+                            readonly property bool read: index < row.dotsRead
+                            anchors.centerIn: parent
+                            width: read ? 10 : 6
+                            height: width
+                            radius: width / 2
+                            color: read ? Theme.ink : Theme.dotUnread
+                        }
+                    }
                 }
             }
             Text {
                 objectName: "rowStatus"
+                visible: row.story.started || row.story.finished
                 height: parent.height
                 verticalAlignment: Text.AlignVCenter
-                readonly property bool strong: !row.story.started || row.story.finished
-                text: row.story.finished ? "Terminado"
-                                         : row.story.started ? Math.round(row.story.progress * 100) + "%" : "Nuevo"
-                color: strong ? Theme.ink : Theme.ink2
-                font.family: strong ? row.fonts.sansBold : row.fonts.sans
-                font.weight: strong ? Font.Bold : Font.Normal
+                text: (row.story.finished ? 100 : Math.round(row.story.progress * 100)) + "%"
+                color: Theme.ink2
+                font.family: row.fonts.sans
                 font.pixelSize: 27
             }
         }

@@ -76,7 +76,7 @@ for MACHINE in armv7l aarch64; do
     python3 "$HERE/fake_appload.py" "$APP" "$DATA" "$(qemu $Q)" || fail "backend checks"
 
     # A story the user drops into the package folder shows up in the app.
-    cp "$PKG/stories/01-el-gato-de-luna.json" "$PKG/stories/99-mine.json"
+    cp "$PKG/stories/02-el-cuento-del-pollo.json" "$PKG/stories/99-mine.json"
     [ -e "$APP/stories/99-mine.json" ] && pass "stories added to /home/root/spanish-stories/stories reach the app"
     rm "$PKG/stories/99-mine.json"
 

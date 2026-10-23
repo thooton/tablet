@@ -145,6 +145,12 @@ class Driver:
         return self.find("library")
 
     def tap_story(self, story_id):
+        # Swipe to the library page that holds the story, as a reader would.
+        view = self.library()
+        ids = [s["id"] for s in self.prop(view, "shown")]
+        target = ids.index(story_id) // 8
+        while self.prop(view, "currentPage") != target:
+            self.swipe(-500 if self.prop(view, "currentPage") < target else 500)
         self.tap(f"row_{story_id}")
         self.wait_until("the story to open", lambda: self.prop(self.app, "view") == "reader"
                         and self.prop(self.app, "story")["id"] == story_id and self.pages())
@@ -300,12 +306,13 @@ def run(d: Driver):
     d.check(len(stories) >= 9, f"library lists {len(stories)} stories")
     d.check(not lib["errors"], "no broken story files")
     view = d.library()
-    d.check(d.prop(view, "pageCount") == 2 and d.find("libraryPage").property("text") == "1 de 2",
-            "eight stories per page, \"1 de 2\" in the corner")
+    npages = (len(stories) + 7) // 8
+    d.check(d.prop(view, "pageCount") == npages and d.find("libraryPage").property("text") == f"1 de {npages}",
+            f"eight stories per page, \"1 de {npages}\" in the corner")
     d.wait(300)
     d.shot("library")
     d.swipe(-500)
-    d.check(d.prop(view, "currentPage") == 1 and d.find("libraryPage").property("text") == "2 de 2",
+    d.check(d.prop(view, "currentPage") == 1 and d.find("libraryPage").property("text") == f"2 de {npages}",
             "swipe left shows the next page")
     d.shot("library-page2")
     d.swipe(500)
@@ -488,9 +495,14 @@ def run(d: Driver):
     d.wait_until("the library", lambda: d.prop(app, "view") == "library")
     d.wait_until("refreshed library", lambda: d.prop(app, "library")["stories"][0]["id"] == big["id"])
     d.check(True, "the story just read is now first")
+    while d.prop(d.library(), "currentPage") > 0:
+        d.swipe(500)
     row = d.find(f"row_{big['id']}")
     status = d.descendants(row, "rowStatus")[0]
-    d.check(status.property("text") == "Terminado", "and shows Terminado")
+    d.check(status.property("text") == "100%", "and shows 100%")
+    dots = d.descendants(row, "rowDots")[0]
+    d.check(all(c.childItems()[0].property("width") == 10 for c in dots.childItems() if c.property("width") == 15),
+            "with every progress dot filled")
     d.wait(200)
     d.shot("library-after")
 

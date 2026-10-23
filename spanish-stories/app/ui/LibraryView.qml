@@ -2,8 +2,9 @@ import QtQuick
 import "components"
 import "js/theme.js" as Theme
 
-// Library: ← back to the reMarkable and ⋮ in a bare header, level tabs, then
-// eight stories per page, most recently opened first. Swipe to change page.
+// Library: a back arrow and Biblioteca (back to the reMarkable) and ⋮ in the header, level
+// tabs, then eight stories per page, most recently opened first. Swipe to
+// change page.
 Item {
     id: view
 
@@ -56,6 +57,21 @@ Item {
             y: (Theme.headHeight - 3 - height) / 2
             onClicked: view.closeApp()
         }
+        Text {
+            objectName: "libraryTitle"
+            x: Theme.headPad + 56 + 14
+            height: Theme.headHeight - 3
+            verticalAlignment: Text.AlignVCenter
+            text: "Biblioteca"
+            color: Theme.ink
+            font.family: view.fonts.sansMedium
+            font.weight: Font.Medium
+            font.pixelSize: 40
+            MouseArea {
+                anchors.fill: parent
+                onClicked: view.closeApp()
+            }
+        }
         IconButton {
             objectName: "libraryMenuButton"
             icon: "menu"
@@ -75,7 +91,7 @@ Item {
     Row {
         id: tabs
         x: Theme.listMargin
-        y: Theme.headHeight + 44
+        y: Theme.headHeight + 52
         height: 34
         Repeater {
             model: view.levels
@@ -122,7 +138,7 @@ Item {
         id: list
         objectName: "storyList"
         x: Theme.listMargin
-        y: tabs.y + tabs.height + 24
+        y: tabs.y + tabs.height + 48
         width: parent.width - 2 * Theme.listMargin
         height: Theme.rowsPerPage * Theme.rowHeight
 

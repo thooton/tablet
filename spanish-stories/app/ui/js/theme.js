@@ -11,6 +11,7 @@ var ink = "#000000";
 var ink2 = "#000000";
 var ink3 = "#000000";
 var rule = "#c9c8c3";
+var dotUnread = "#8a8a8a";   // the library's progress dots not read yet
 
 var screenWidth = 1404;
 var screenHeight = 1872;
@@ -19,7 +20,7 @@ var screenHeight = 1872;
 var headHeight = 137;        // toolbar row, including its 3 px rule
 var headPad = 45;
 var listMargin = 60;
-var rowHeight = 190;
+var rowHeight = 188;
 var rowsPerPage = 8;
 
 // Reading

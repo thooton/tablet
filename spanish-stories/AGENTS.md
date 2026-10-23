@@ -13,8 +13,10 @@ More screens are in [`docs/screens/`](docs/screens).
 
 **Features**
 
-* 9 original stories from A1 to B1, with translations that fit the context
-  (*tiene ocho años* → "is eight years old", not "has eight years").
+* 22 real stories by Spanish-speaking writers and from old graded readers,
+  A1 to B2 (see [Included stories](#included-stories)), with translations that
+  fit the context (*tiene cinco años* → "is five years old", not "has five
+  years").
 * Words and whole phrases are underlined with dots. Tap one and it turns
   black, and a box shows the English (all the alternatives, one per line).
   Tap anywhere else to close it.
@@ -88,6 +90,7 @@ A story is a JSON file holding a list of `(spanish, english)` pairs:
   "title_en": "Luna's Cat",
   "level": "A1",
   "description": "One morning Luna's black cat, Sol, has disappeared.",
+  "author": "Your name, or where the text comes from",
   "content": [
     ["Luna", "Luna"],
     ["tiene", "is"],
@@ -108,6 +111,7 @@ A story is a JSON file holding a list of `(spanish, english)` pairs:
 * Punctuation goes in its own pair with an empty translation. Spacing is
   automatic (no space before `.,;:!?»`, none after `¿¡«`).
 * `["\n", ""]` starts a new paragraph.
+* `author` records where the text comes from (it is not shown in the app).
 * All fields except `content` are optional. A bare list of pairs also works,
   and the title then comes from the file name. A `level` outside A1–C1 gets
   its own tab.
@@ -118,6 +122,7 @@ Writing JSON by hand is tedious, so there is a shorter text format:
 title: El gato de Luna
 title_en: Luna's Cat
 level: A1
+author: Your name
 
 [Luna|Luna] [tiene|is] [ocho años|eight years old]. [Tiene|She has] [un gato|a cat] [que|that / who] [se llama|is called] [Sol|Sol].
 
@@ -130,6 +135,23 @@ python tools/validate_stories.py my-story.json   # checks it
 ```
 
 The sources of the included stories are in [`stories/src/`](stories/src).
+
+### Included stories
+
+All texts are in the public domain and are reproduced word for word. The only
+changes are modern spelling (*fué* → *fue*, *á* → *a*, accents on capitals),
+modern dialogue dashes and quotes, and fixes for obvious typos in the scans.
+The English glosses were written for this app.
+
+| Level | Story | Source |
+|---|---|---|
+| A1 | Anécdotas, El cuento del pollo, Los tres osos | E. S. Harrison, *An Elementary Spanish Reader* (1912), [Project Gutenberg #22065](https://www.gutenberg.org/ebooks/22065) |
+| A2 | El testamento, Un hombre insaciable, Don Juan Bolondrón, Los tres barcos | Harrison (1912), as above |
+| A2 | Un cuento de un perro, El muchacho y el lobo, La piedra en el camino, El viejo y el asno, El príncipe y la araña | L. A. Wilkins and M. A. Luria, *Lecturas fáciles con ejercicios* (1916), [Project Gutenberg #24250](https://www.gutenberg.org/ebooks/24250) |
+| B1 | El camello perdido, El juez y el escarabajo, El oso | Wilkins and Luria (1916), as above |
+| B1 | La hormiguita | Fernán Caballero (1877), [Wikisource](https://es.wikisource.org/wiki/La_hormiguita) |
+| B1 | Las medias de los flamencos, La tortuga gigante, El loro pelado, La abeja haragana | Horacio Quiroga, *Cuentos de la selva* (1918), [Wikisource](https://es.wikisource.org/wiki/Cuentos_de_la_selva) |
+| B2 | Bebé y el señor don Pomposo, Nené traviesa | José Martí, *La Edad de Oro* (1889), [Wikisource](https://es.wikisource.org/wiki/La_Edad_de_Oro) |
 
 **Put a story on the tablet** by copying it into the stories folder:
 

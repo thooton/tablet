@@ -31,6 +31,13 @@ function buildParagraphs(tokens) {
     var clusters = [];
     var cluster = null;
     var glueNext = true; // start of paragraph: nothing to put a space after
+    // A dash opens an aside (—dice el pollo) or, right after a word while an
+    // aside is open, closes it (—dice el pollo—, el cielo...): a closing dash
+    // hugs the word before it and is followed by a space. A dash after . : ;
+    // (but not ...) starts a new line of dialogue, like one opening a paragraph.
+    var asideOpen = false;
+    var prevWord = false;
+    var prevText = "";
 
     function flushParagraph() {
         if (cluster) clusters.push(cluster);
@@ -38,6 +45,9 @@ function buildParagraphs(tokens) {
         clusters = [];
         cluster = null;
         glueNext = true;
+        asideOpen = false;
+        prevWord = false;
+        prevText = "";
     }
 
     for (var i = 0; i < tokens.length; i++) {
@@ -49,9 +59,18 @@ function buildParagraphs(tokens) {
         }
         var link = en.length > 0;
         var words = es.split(/\s+/).filter(function (w) { return w.length > 0; });
+        var closingDash = false;
+        var closesAfter = false; // "!—" in "—¡y bien vengado!— del..."
+        if (!link && es.charAt(0) === "—" && cluster) {
+            closingDash = asideOpen && prevWord;
+            asideOpen = !closingDash && (prevWord || !/[.:;]$/.test(prevText) || /(\.\.\.|…)$/.test(prevText));
+        } else if (!link && asideOpen && es.length > 1 && es.charAt(es.length - 1) === "—") {
+            closesAfter = true;
+            asideOpen = false;
+        }
         for (var w = 0; w < words.length; w++) {
             var text = words[w];
-            var glued = w === 0 ? (glueNext || noSpaceBefore(text)) : false;
+            var glued = w === 0 ? (glueNext || noSpaceBefore(text) || closingDash) : false;
             var piece = { text: text, tok: link ? i : -1, punct: !link };
             if (glued && cluster) {
                 cluster.pieces.push(piece);
@@ -61,6 +80,11 @@ function buildParagraphs(tokens) {
             }
         }
         glueNext = words.length > 0 && noSpaceAfter(words[words.length - 1]);
+        if ((closingDash && es === "—") || closesAfter) glueNext = false;
+        if (words.length > 0) {
+            prevWord = link || isWordLike(es);
+            prevText = es;
+        }
     }
     flushParagraph();
     return paragraphs;

@@ -1,0 +1,45 @@
+title: El camello perdido
+title_en: The Lost Camel
+level: B1
+author: Cuento oriental · L. A. Wilkins y M. A. Luria, Lecturas fáciles (1916)
+description: A wise man describes a lost camel perfectly, without ever having seen it.
+
+[Un derviche|A dervish (a wandering holy man)] [que|who] [viajaba|was traveling] [solo|alone] [por el desierto|through the desert] [se encontró con|came across] [dos comerciantes|two merchants].
+
+—¿[Han perdido ustedes|Have you lost] [algún camello|a camel]? —[les preguntó|he asked them].
+
+—[Sí|Yes] —[contestaron|answered] [ellos|they].
+
+—¿[Era|Was it] [ciego|blind] [del ojo derecho|in the right eye] [y|and] [cojo|lame] [de la pata izquierda|in the left leg]? —[volvió a preguntar|asked again] [el derviche|the dervish].
+
+—[Sí|Yes].
+
+—¿[Había perdido|Had it lost] [un diente|a tooth]? —[siguió preguntando|went on asking] [el derviche|the dervish].
+
+—[Sí|Yes].
+
+—¿[Estaba cargado de|Was it loaded with] [miel|honey] [y|and] [de maíz|corn]?
+
+—[Sí|Yes], [sí|yes] —[dijeron|said] [los comerciantes|the merchants]—. [Díganos|Tell us] [dónde está|where it is].
+
+—[No lo sé|I don't know] —[dijo|said] [tranquilamente|calmly] [el derviche|the dervish].
+
+—[Pero|But] ¿[no lo ha visto usted|haven't you seen it]?
+
+—[Nunca|Never] [he visto|have I seen] [ese camello|that camel], [ni|nor] [he oído hablar de él|have I heard of it] [más que a ustedes|except from you].
+
+[Los comerciantes|The merchants] [se miraron|looked at each other] [sorprendidos|surprised], [y|and] [creyeron|believed] [ser víctimas|they were victims] [de un engaño|of a trick] [y|and] [de un robo|of a theft].
+
+[Se acercaron a él|They came up to him], [le cogieron|grabbed him] [y|and] [le preguntaron|asked him]:
+
+—¿[Dónde|Where] [está|is] [el camello|the camel], [y|and] [qué ha hecho usted de|what have you done with] [las joyas|the jewels] [que|that] [había|were] [entre la carga|among the load]?
+
+—[No he visto|I haven't seen] [el camello|the camel], [las joyas|the jewels] [y|or] [la carga|the load] —[repitió|repeated] [el derviche|the dervish].
+
+[Entonces|Then] [le condujeron|they took him] [ante el Cadí|before the Cadi (the judge)] [para que|so that] [lo juzgara|he could judge him]; [pero|but] [después de|after] [un examen|an examination] [muy detenido|very thorough] [no resultó|nothing came out] [nada|nothing] [en contra del|against the] [derviche|dervish]. [No era|He was not] [culpable|guilty] [de mentira|of lying] [ni|or] [de robo|of theft].
+
+—[Es un hechicero|He's a sorcerer] —[exclamaron|exclaimed] [los comerciantes|the merchants].
+
+[Pero|But] [el derviche|the dervish] [le dijo|said] [tranquilamente|calmly] [al Cadí|to the Cadi]:
+
+—[Veo|I see] [que|that] [está usted sorprendido|you are surprised], [y|and] [que|that] [sospecha|you suspect] [que|that] [estoy engañándole|I'm deceiving you]. [Quizás|Perhaps] [le he dado motivo|I've given you reason] [para ello|for that], [y|and] [debo explicarme|I must explain myself]. [He vivido|I have lived] [muchos años|many years], [y|and] [aunque|although] [no he aprendido|I haven't learned] [nada nuevo|anything new], [me he habituado a|I have got used to] [ver|looking] [con cuidado|carefully] [y|and] [a pensar bien|thinking hard] [en lo que veo|about what I see], [aunque sea|even if it is] [en el desierto|in the desert]. [Encontré|I found] [esta mañana|this morning] [las huellas|the tracks] [de un camello|of a camel] [que|that] [iba perdido|was lost], [porque|because] [junto a|beside] [sus pisadas|its footprints] [no había|there was] [ninguna pisada humana|no human footprint]. [Comprendí|I understood] [que|that] [el camello|the camel] [era ciego|was blind] [del ojo derecho|in the right eye], [porque|because] [estaba intacta|was untouched] [la hierba|the grass] [de ese lado|on that side], [y|and] [la del izquierdo|the grass on the left] [se la había comido|it had eaten] [al pasar|as it went by], [y|and] [deduje|I deduced] [que|that] [iba cojo|it was limping], [porque|because] [apenas|hardly] [se marcaban|showed] [en la arena|in the sand] [las pisadas|the footprints] [de una de sus patas|of one of its legs]. [Noté|I noticed] [además|also] [que|that] [le faltaba|it was missing] [un diente|a tooth], [porque|because] [en donde|wherever] [había mordido|it had bitten] [la hierba|the grass] [quedaba|there remained] [siempre|always] [en ella|in it] [un pequeño espacio|a small patch] [sin cortar|uncut]. [Hallé|I found] [en el suelo|on the ground] [algunas hormigas|some ants] [arrastrando|dragging] [algunos granos|some grains] [de maíz|of corn], [caídos|fallen] [en la misma dirección|in the same direction] [de las pisadas|as the footprints] [del camello|of the camel], [y|and] [también|also] [hallé|I found] [algunos montones|some swarms] [de moscas|of flies] [disputándose|fighting over] [unas gotas|a few drops] [de miel|of honey], [y|and] [por estas señas|from these signs] [conocí|I knew] [la carga|the load] [que|that] [aquél|it] [llevaba|was carrying].

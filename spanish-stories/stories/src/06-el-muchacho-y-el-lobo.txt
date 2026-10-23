@@ -1,0 +1,23 @@
+title: El muchacho y el lobo
+title_en: The Boy and the Wolf
+level: A2
+author: Fábula de Esopo · L. A. Wilkins y M. A. Luria, Lecturas fáciles (1916)
+description: A shepherd boy shouts "Wolf!" once too often.
+
+[Un muchacho|A boy] [tenía a su cargo|was in charge of] [la guarda|looking after] [de un rebaño|a flock] [de ovejas|of sheep] [de su padre|belonging to his father]. [Las mantenía|He kept them] [en la ladera|on the slope] [de un monte|of a hill] [y|and] [en sitio apartado|in a place away] [de las tierras de cultivo|from the farmland], [para que|so that] [no hicieran daño|they wouldn't damage] [a los sembrados|the crops], [pero|but] [a distancia conveniente|close enough] [para que|so that] [el padre|the father] [y|and] [sus empleados|his workers] [pudiesen|could] [acudir|come] [en defensa|to the defense] [del rebaño|of the flock] [y|and] [del pastor|of the shepherd] [en caso de peligro|in case of danger].
+
+[Un día|One day] [en que|when] [el padre|the father] [trabajaba|was working] [muy afanoso|very hard] [con|with] [otros varios hombres|several other men] [en sus tierras de labranza|in his fields], [oyó|he heard] [que|that] [el pastorcillo|the little shepherd] [gritaba|was shouting]:
+
+—¡[El lobo|Wolf]! ¡[El lobo|Wolf]!
+
+[Dejaron|Left] [ellos|they] [su trabajo|their work] [y|and] [corrieron|ran] [con gran prisa|in a great hurry] [hacia|towards] [el sitio|the place] [donde|where] [sonaban|could be heard] [los gritos|the shouts]. [Llegaron|They arrived], [y|and] [nada|nothing] [indicaba|showed] [allí|there] [el peligro|the danger] [que|that] [daban a entender|were meant to signal] [aquellas señales de alarma|those cries of alarm]. [Las ovejas|The sheep] [pacían|were grazing] [tranquilamente|peacefully], [y|and] [el pastor mismo|the shepherd himself] [estaba acostado|was lying] [bajo la sombra|in the shade] [de un árbol|of a tree].
+
+[Pasados algunos días|A few days later] [volvió a gritar|shouted again] [el muchacho|the boy]:
+
+—¡[El lobo|Wolf]! ¡[El lobo|Wolf]!
+
+[Otra vez|Once again] [dejaron|they left] [apresuradamente|hurriedly] [su trabajo|their work] [y|and] [acudieron|came] [en socorro|to the aid] [del pastor|of the shepherd] [y|and] [de las ovejas|of the sheep]; [pero|but] [tampoco|again... no] [encontraron|they found] [rastros|traces] [de lobo|of a wolf] [ni|nor] [señal ninguna|any sign at all] [de alarma|of alarm]. [El rebaño|The flock] [pacía|was grazing on] [la sabrosa hierba|the tasty grass] [sin ninguna inquietud|without any worry], [y|and] [el muchacho|the boy], [lejos de|far from] [estar asustado|being frightened], [parecía|seemed] [contento de|pleased at] [haber alarmado|having alarmed] [a los que|those who] [llegaban|came] [a defenderle|to defend him].
+
+[Poco tiempo después|A short time later] [apareció|appeared] [por aquel sitio|in that place] [un furioso lobo|a furious wolf] [que|that] [empezó a|began to] [destrozar|tear apart] [el rebaño|the flock].
+
+[El pastor|The shepherd] [gritó|shouted] [entonces|then] [con mayor fuerza|even louder]; [pero|but] [ni|neither] [el padre|the father] [ni|nor] [sus compañeros|his companions] [dieron crédito a|believed] [los gritos|the shouts], [y|and] [la fiera|the wild beast] [concluyó por|ended up] [matar|killing] [al muchacho|the boy] [que|who] [tantas veces|so many times] [había pedido socorro|had cried for help].

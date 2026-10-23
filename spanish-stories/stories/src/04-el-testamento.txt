@@ -1,0 +1,29 @@
+title: El testamento
+title_en: The Will
+level: A2
+author: Cuento popular · E. S. Harrison, An Elementary Spanish Reader (1912)
+description: A dying villager leaves the horse to his relatives and the dog to his wife.
+
+[Cierto|A certain] [lugareño|villager] [estaba a punto de|was about to] [morir|die]. [No era|He wasn't] [muy|very] [rico|rich]. [Sólo|Only] [tenía|he had] [un perro|a dog] [y|and] [un caballo|a horse]. [No tenía|He didn't have] [hijos|children] [pero|but] [tenía|he had] [una mujer|a wife].
+
+[Poco antes de|Shortly before] [morir|dying], [llamó|he called] [a su mujer|his wife] [y|and] [le dijo|said to her]:
+
+—[Ya sabes|You know] [que|that] [voy a morir|I'm going to die]. [No te he olvidado|I haven't forgotten you] [en|in] [mi testamento|my will]; [pero|but] [no soy|I'm not] [rico|rich] [y|and] [no tengo|I have no] [más bienes que|other belongings than] [un perro|a dog] [y|and] [un caballo|a horse].
+
+—[Yo|I] [apreciaré|will treasure] [tu recuerdo|your memory], [marido mío|my husband] —[dijo|said] [la mujer|the wife] [llorando|crying].
+
+—[Después de|After] [mi muerte|my death] —[continuó|went on] [el marido|the husband]—, [debes|you must] [vender|sell] [el caballo|the horse] [y|and] [entregar|hand over] [el dinero|the money] [a mis parientes|to my relatives].
+
+—¡[Cómo|What]! ¿[Debo|Must I] [entregar|hand over] [el dinero|the money] [a tus parientes|to your relatives]?
+
+—[Sí|Yes]; [pero|but] [espera|wait]. [Te regalo|I give you] [generosamente|generously] [el perro|the dog]. [Puedes|You can] [venderlo|sell it], [si quieres|if you want], [o|or] [puedes|you can] [conservarlo|keep it] [para|to] [guardar|guard] [la casa|the house]. [Es|It's] [un animal|an animal] [fiel|faithful / loyal]. [Te servirá de|It will be] [gran consuelo|a great comfort to you].
+
+[El lugareño|The villager] [se murió|died]. [La mujer|The wife] [quería|wanted] [obedecer|to obey] [a su marido|her husband]. [Una mañana|One morning] [cogió|she took] [el caballo|the horse] [y|and] [el perro|the dog] [y|and] [los llevó|took them] [a la feria|to the fair / the market].
+
+—¿[Cuánto|How much] [quiere Vd.|do you want] [por|for] [ese caballo|that horse]? —[preguntó|asked] [un hombre|a man].
+
+—[Quiero|I want] [vender|to sell] [el caballo|the horse] [y|and] [el perro|the dog] [juntos|together] —[respondió|answered] [la mujer|the woman]—. [Quiero|I want] [por el perro|for the dog] [cien duros|a hundred duros (five-peseta coins)] [y|and] [por el caballo|for the horse] [diez reales|ten reales (small coins)].
+
+—[Acepto|I accept] —[dijo|said] [el hombre|the man]—, [porque|because] [el precio|the price] [de los dos|of the two] [juntos|together] [es|is] [razonable|reasonable].
+
+[La buena mujer|The good woman] [dio|gave] [a los parientes|to the relatives] [de su marido|of her husband] [los diez reales|the ten reales] [que|that] [recibió|she received] [por el caballo|for the horse] [y|and] [conservó|kept] [los cien duros|the hundred duros] [que|that] [recibió|she received] [por el perro|for the dog]. [Así|In this way] [obedeció|she obeyed] [a su marido|her husband].
