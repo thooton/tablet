@@ -112,7 +112,7 @@ def run(d: Driver, sample: int):
     d.wait_until("the deck", lambda: d.js("root.view") == "drill")
     d.wait_until("the first question", lambda: d.js("drill.question !== null"))
     d.wait(400)
-    d.check(d.js("drill.deck.length") == 6461, "drills 6461 questions (held-out tests left out)")
+    d.check(d.js("drill.deck.length") == 6363, "drills 6363 questions (held-out tests left out)")
     d.check(d.js("drill.settings.shuffle") is True, "shuffle is on by default")
     d.shot("drill")
 

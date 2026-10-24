@@ -172,8 +172,8 @@ Item {
             Item { width: 1; height: Theme.px(8) }
             UiText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: practice.section ? practice.section.qs.length + " questions · "
-                                         + (practice.timed ? Theme.SECTION_MINUTES + " minutes" : "untimed") : ""
+                text: practice.section ? practice.section.qs.length + " questions ("
+                                         + (practice.timed ? Theme.SECTION_MINUTES + " minutes" : "untimed") + ")" : ""
                 size: 15
                 color: Theme.inkSoft
             }
@@ -384,10 +384,13 @@ Item {
                     text: {
                         var total = results.scored.length, blank = total - results.answered;
                         var pct = total ? Math.round(results.correctCount / total * 100) : 0;
-                        return results.correctCount + " of " + total + " right (" + pct + "%)"
-                            + (blank > 0 ? " · " + blank + " left blank, counted wrong" : "")
-                            + (practice.timed ? " · timed" : " · untimed")
-                            + (practice.elapsed ? " · " + results.duration(practice.elapsed) : "");
+                        var parts = [results.correctCount + " of " + total + " right (" + pct + "%)"];
+                        if (blank > 0)
+                            parts.push(blank + " left blank (counted wrong)");
+                        parts.push(practice.timed ? "timed" : "untimed");
+                        if (practice.elapsed)
+                            parts.push(results.duration(practice.elapsed));
+                        return parts.join("  |  ");
                     }
                 }
 
@@ -400,7 +403,7 @@ Item {
                 Repeater {
                     model: practice.sections
                     delegate: ResultRow {
-                        label: modelData.label + (modelData.experimental ? " · Experimental" : "")
+                        label: modelData.label + (modelData.experimental ? " (experimental)" : "")
                         correctCount: modelData.qs.filter(function (i) { return practice.answers[i] === Deck.questions[i].correct; }).length
                         total: modelData.qs.length
                     }

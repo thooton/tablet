@@ -96,7 +96,7 @@ var TYPE_FILTERS = (function () {
                 out.push({
                     key: code + SEP + types[k],
                     label: types[k],
-                    group: groupName === "Question" ? section.label : section.label + " · " + groupName
+                    group: groupName === "Question" ? section.label : section.label + " | " + groupName
                 });
             }
         }

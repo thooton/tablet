@@ -341,7 +341,7 @@ Rectangle {
                 x: Theme.px(16)
                 height: parent.height
                 text: menu.deckSize + " question" + (menu.deckSize === 1 ? "" : "s")
-                      + (menu.filtered ? " · filtered from " + menu.totalSize : "")
+                      + (menu.filtered ? " (filtered from " + menu.totalSize + ")" : "")
                 size: 13
                 color: Theme.inkFaint
             }

@@ -2,7 +2,7 @@
 
 The [LSAT Falcon](../demon) drilling app on a reMarkable 2: the same screens,
 fonts and layout as the web app open in portrait, redrawn for e-ink. It has
-every question in the deck (7,626 LR and RC questions; 6,461 drilled, with
+every question in the deck (7,626 LR and RC questions; 6,363 drilled, with
 the held-out tests reserved for practice tests), with answer statistics and
 explanations, the filters and deck outline, and timed practice tests with a
 scaled score.

@@ -401,7 +401,7 @@ Item {
                         parts.push("type " + Deck.summarizeTypes(s.types));
                     if (s.tests.length)
                         parts.push("test " + s.tests.slice().sort(function (a, b) { return a - b; }).join(", "));
-                    return "No questions match " + parts.join(" · ") + ".";
+                    return "No questions match " + parts.join("; ") + ".";
                 }
             }
             PillButton {
