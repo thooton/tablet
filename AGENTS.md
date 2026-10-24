@@ -8,6 +8,9 @@ has its own `AGENTS.md`; read it before changing that app.
 
 - `spanish-stories/`: Biblioteca, graded Spanish stories with tap-to-
   translate (AppLoad id `spanish-reader`).
+- `lsat-falcon/`: LSAT Falcon, the LSAT drilling web app (thooton's `demon`,
+  not on GitHub) redrawn for e-ink, with its question deck in `deck/`
+  (AppLoad id `lsat-falcon`).
 - `updater/`: Updater, which installs and updates every app here from this
   repository's releases (AppLoad id `updater`).
 - `tools/`: what the apps share: `appbuild.py` (rcc, the Go backend for both
