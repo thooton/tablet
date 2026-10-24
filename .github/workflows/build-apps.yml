@@ -1,0 +1,88 @@
+name: Build apps
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: All apps
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # The whole history: manifest.json carries each app's newest commits.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+
+      # Qt 6's rcc compiles each app's QML into resources.rcc.
+      - name: Install rcc
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q qt6-base-dev-tools
+          echo "RCC=$(dpkg -L qt6-base-dev-tools | grep '/rcc$' | head -n 1)" >> "$GITHUB_ENV"
+
+      # Every app's backend tests, then every app's build: <dir>/tools/build.py
+      # writes <dir>/dist/<dir>.tar.gz (see AGENTS.md).
+      - name: Test and build
+        run: |
+          for mod in */backend/go.mod; do
+            (cd "$(dirname "$mod")" && go vet ./... && go test ./...)
+          done
+          for build in */tools/build.py; do
+            python3 "$build"
+          done
+
+      # Each archive is named for its app's directory, which is also its name
+      # in the release. Then what the Updater reads, manifest.json, from the
+      # archives themselves so it can't drift from the sources (see
+      # .github/manifest.py).
+      - name: Collect the apps and write the manifest
+        run: |
+          mkdir release
+          for build in */tools/build.py; do
+            app="${build%%/*}"
+            cp "$app/dist/$app.tar.gz" release/
+          done
+          python3 .github/manifest.py release
+          cat release/manifest.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: all-apps
+          path: release/
+          if-no-files-found: error
+
+      # Pushes to master also publish the apps to the rolling "latest" release.
+      - name: Publish to the "latest" release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -f latest
+          git push -f origin latest
+          cat > notes.md <<'EOF'
+          Built automatically from master. The Updater app on the tablet installs these; to install one by hand, copy its `.tar.gz` to the tablet, unpack it in `/home/root` and run its `install.sh` (see the README).
+
+          `manifest.json` describes every app (AppLoad id, version, size, SHA-256 and its newest commits); the Updater reads it.
+          EOF
+          gh release view latest >/dev/null 2>&1 || \
+            gh release create latest --title "Tablet apps (latest)" --notes-file notes.md
+          gh release edit latest --notes-file notes.md
+          gh release upload latest release/* --clobber
+          # Drop assets no build produces any more.
+          gh release view latest --json assets -q '.assets[].name' | while read -r name; do
+            [ -f "release/$name" ] || gh release delete-asset latest "$name" -y
+          done
