@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installs Spanish Reader into AppLoad. Runs on the reMarkable itself:
+# Installs Biblioteca into AppLoad. Runs on the reMarkable itself:
 #
 #     sh /home/root/spanish-stories/install.sh
 #
@@ -19,7 +19,7 @@ if [ ! -d "$APPLOAD" ]; then
     cat <<EOF
 AppLoad is not installed on this tablet ($APPLOAD is missing).
 
-Spanish Reader runs inside AppLoad, which runs on xovi. Install them first:
+Biblioteca runs inside AppLoad, which runs on xovi. Install them first:
   1. xovi:    https://github.com/asivery/xovi  (guide: https://xovi.bearblog.dev/appload/)
   2. AppLoad: https://github.com/asivery/rm-appload
 Then run this script again.
@@ -52,5 +52,5 @@ mv "$DIR.new" "$DIR"
 chmod 755 "$PKG/install.sh" "$PKG/uninstall.sh" 2>/dev/null || true
 
 COUNT=$(ls "$PKG/stories" | grep -c '\.json$' || true)
-echo "Installed Spanish Reader ($ARCH, $COUNT stories in $PKG/stories)."
+echo "Installed Biblioteca ($ARCH, $COUNT stories in $PKG/stories)."
 echo "Open AppLoad and tap Reload (or restart the tablet) to see it."

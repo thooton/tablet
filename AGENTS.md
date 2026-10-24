@@ -6,7 +6,7 @@ Apps for the user's reMarkable 2 tablet, one per directory. Each runs inside
 loads an app's QML into the tablet's own UI and starts its backend. Each app
 has its own `AGENTS.md`; read it before changing that app.
 
-- `spanish-stories/`: Spanish Reader, graded Spanish stories with tap-to-
+- `spanish-stories/`: Biblioteca, graded Spanish stories with tap-to-
   translate (AppLoad id `spanish-reader`).
 - `updater/`: Updater, which installs and updates every app here from this
   repository's releases (AppLoad id `updater`).
@@ -32,7 +32,7 @@ the latest release and offers an update only when the release's is higher,
 so a change shipped without a bump never reaches the tablet.
 
 Lead each commit subject with the app and its new version, then a sentence:
-`Spanish Reader 1.0.1: fix the page count after a font change`. The
+`Biblioteca 1.0.1: fix the page count after a font change`. The
 Updater's What's New shows each app's ten newest commits with the lead cut
 off (`.github/manifest.py`), so write the rest for the user.
 
@@ -41,7 +41,9 @@ off (`.github/manifest.py`), so write the rest for the user.
 The Updater and CI rely on this layout. An app in `<dir>/`:
 
 - `app/manifest.json`: AppLoad's manifest (`id`, `name`, `entry`,
-  `loadsBackend`, ...) plus `"version"`. AppLoad ignores keys it doesn't
+  `loadsBackend`, ...) plus `"version"`, and `"formerNames"` if the app
+  was renamed (for What's New). Never change `id`: the Updater and the
+  app's data find it by that. AppLoad ignores keys it doesn't
   know.
 - `app/application.qrc`: the QML, fonts and images, compiled with Qt 6's
   `rcc` into `resources.rcc`. `app/icon.png` (128×128) is AppLoad's icon
@@ -71,8 +73,17 @@ every frame. Make tap targets large. The QML is Qt 6 (`import QtQuick`, no
 versions). The root item needs `signal close` and `function unloading()`,
 and talks to its backend through `AppLoad { applicationID: "<id>" }`
 (`sendMessage(type, json)` / `onMessageReceived`). AppLoad sends the backend
--2 when a frontend attaches and -1 when it closes; see
-`spanish-stories/backend/transport.go` for the wire format. Backends are Go
+-2 with the number of frontends when one attaches and -3 when one goes; see
+`spanish-stories/backend/transport.go` for the wire format.
+
+**Never call `terminate()` on the AppLoad endpoint, and never let a backend
+exit while its app is open**, though AppLoad's README suggests calling it in
+`unloading()`. Either makes AppLoad unload the app from its socket thread
+instead of the GUI thread, which crashes the tablet's UI and restarts it.
+The backend stays running after the window closes and AppLoad reuses it on
+the next open. Copy `lifecycle.go` from either backend: it exits only when
+install.sh has replaced the binary and no frontend has been attached for a
+few seconds, so an update takes effect on the next open. Backends are Go
 with `CGO_ENABLED=0` and no third-party modules.
 
 After an update AppLoad needs Reload (in its menu, with every app closed)

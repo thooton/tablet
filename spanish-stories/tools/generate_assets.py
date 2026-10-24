@@ -65,6 +65,7 @@ def icons(folder: Path) -> None:
 
 
 def icon(path: Path, size: int) -> None:
+    """An open book in AppLoad's rounded frame, drawn in the line icons' ink."""
     img = QImage(size, size, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     p = QPainter(img)
@@ -74,19 +75,25 @@ def icon(path: Path, size: int) -> None:
     p.setBrush(QBrush(QColor("white")))
     p.drawRoundedRect(QRectF(5 * s, 5 * s, 118 * s, 118 * s), 20 * s, 20 * s)
 
-    fid = QFontDatabase.addApplicationFont(str(UI / "fonts" / "NotoSerif-Regular.ttf"))
-    family = QFontDatabase.applicationFontFamilies(fid)[0]
-    font = QFont(family)
-    font.setPixelSize(int(76 * s))
-    font.setBold(True)
-    p.setFont(font)
-    p.setPen(QColor("black"))
-    p.drawText(QRectF(0, 4 * s, size, 92 * s), Qt.AlignCenter, "Ñ")
-
-    p.setPen(Qt.NoPen)
-    p.setBrush(QBrush(QColor("black")))
-    for i in range(6):
-        p.drawEllipse(QPointF((34 + i * 12) * s, 102 * s), 3.2 * s, 3.2 * s)
+    pen = QPen(QColor("black"), 6 * s, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+    p.setPen(pen)
+    p.setBrush(Qt.NoBrush)
+    for side in (-1, 1):
+        def x(v):
+            return (64 + side * v) * s
+        # A page: from the spine out along a gentle curve, down, and back.
+        page = QPainterPath(QPointF(x(0), 42 * s))
+        page.cubicTo(QPointF(x(12), 33 * s), QPointF(x(28), 31 * s), QPointF(x(42), 34 * s))
+        page.lineTo(x(42), 92 * s)
+        page.cubicTo(QPointF(x(28), 89 * s), QPointF(x(12), 91 * s), QPointF(x(0), 100 * s))
+        p.drawPath(page)
+        # Lines of text.
+        thin = QPen(QColor("black"), 4 * s, Qt.SolidLine, Qt.RoundCap)
+        p.setPen(thin)
+        for i, y in enumerate((50, 61, 72)):
+            p.drawLine(QPointF(x(10), (y + 1) * s), QPointF(x(34 if i < 2 else 26), (y - 1) * s))
+        p.setPen(pen)
+    p.drawLine(QPointF(64 * s, 42 * s), QPointF(64 * s, 100 * s))
     p.end()
     img.save(str(path))
 

@@ -15,7 +15,7 @@ header+body protocol (over TCP here).
     --offscreen         no window (QT_QPA_PLATFORM=offscreen), for --shot
 
 Needs PySide6 (pip install PySide6) and Go. Mouse clicks act as taps; S
-saves a screenshot to build/emulator/, Esc quits. Spanish Reader has its
+saves a screenshot to build/emulator/, Esc quits. Biblioteca has its
 own, older emulator with UI tests in spanish-stories/emulator/.
 """
 import argparse

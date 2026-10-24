@@ -1,5 +1,5 @@
-Spanish Reader for reMarkable
-=============================
+Biblioteca for reMarkable
+=========================
 
 Short Spanish stories. Every word or phrase has a dotted underline; tap it
 to see the English.

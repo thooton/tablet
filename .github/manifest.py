@@ -11,7 +11,7 @@ beside it as <dir>.png. Then the archive's size and SHA-256, and what's new,
 from the newest commits that touched the app's directory (git log, so CI
 needs the history: checkout with fetch-depth 0).
 
-A commit subject leads with the apps it changes ("Spanish Reader 1.0.1: fix
+A commit subject leads with the apps it changes ("Biblioteca 1.0.1: fix
 the page count"). That lead is cut off, leaving the sentence ("Fix the page
 count."), and a version in it is kept beside the text.
 """
@@ -79,13 +79,13 @@ def note(names, known, sha, time, subject):
     return out
 
 
-def notes(app, label, known):
+def notes(app, labels, known):
     if not os.path.isdir(app):
         return []
     log = subprocess.run(
         ["git", "log", "--no-merges", "-n", str(NOTES), "--format=%h%x00%cI%x00%s", "--", app],
         check=True, capture_output=True, text=True).stdout
-    names = {app.lower(), (label or "").lower()}
+    names = {app.lower()} | {n.lower() for n in labels}
     out = []
     for line in log.splitlines():
         sha, time, subject = line.split("\0", 2)
@@ -101,7 +101,11 @@ def main():
         if file.endswith(".tar.gz"):
             app = file[: -len(".tar.gz")]
             read[app] = read_app(os.path.join(release, file), app)
-    known = {app.lower() for app in read} | {m["name"].lower() for m, _ in read.values()}
+    # An app's directory, its name, and any names it had before
+    # ("formerNames" in its manifest), so old commits' leads are still cut.
+    known = {app.lower() for app in read}
+    for m, _ in read.values():
+        known |= {n.lower() for n in [m["name"]] + m.get("formerNames", [])}
 
     for app, (manifest, icon) in read.items():
         file = app + ".tar.gz"
@@ -121,7 +125,7 @@ def main():
                 f.write(icon)
             entry["icon"] = app + ".png"
             entry["iconSha256"] = hashlib.sha256(icon).hexdigest()
-        entry["notes"] = notes(app, manifest["name"], known)
+        entry["notes"] = notes(app, [manifest["name"]] + manifest.get("formerNames", []), known)
         apps[app] = entry
 
     commit = subprocess.run(["git", "rev-parse", "HEAD"], check=True,

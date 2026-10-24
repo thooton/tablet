@@ -1,4 +1,4 @@
-# Spanish Reader for reMarkable
+# Biblioteca for reMarkable
 
 A graded Spanish story reader for the reMarkable tablet. Pick a story, read it
 on the e-ink screen, and tap any dotted word or phrase to see what it means
@@ -41,7 +41,7 @@ More screens are in [`docs/screens/`](docs/screens).
 ## Install
 
 With the **Updater** on the tablet (`../updater`), open it and tap **GET**
-beside Spanish Reader; it installs updates the same way. By hand:
+beside Biblioteca; it installs updates the same way. By hand:
 
 Everything lives in one folder on the tablet, `/home/root/spanish-stories`,
 which holds `install.sh`, `uninstall.sh`, the app and the stories.
@@ -68,7 +68,7 @@ which holds `install.sh`, `uninstall.sh`, the app and the stories.
    The installer checks that AppLoad is there (if it is missing, it prints
    where to get it) and installs the build that matches the tablet's CPU.
 
-3. Open the **AppLoad** menu, tap **Reload**, and tap **Spanish Reader**. The
+3. Open the **AppLoad** menu, tap **Reload**, and tap **Biblioteca**. The
    **←** in the library closes the app.
 
 To update, unpack a newer archive over the same folder and run `install.sh`
@@ -238,6 +238,11 @@ The two exchange JSON messages over a unix socket:
 | 6 / 101 | | reset a story's progress |
 
 Progress is saved to `/home/root/.local/share/spanish-reader/state.json`.
+
+The backend keeps running after the app closes, and AppLoad reuses it the
+next time; the app never calls `terminate()`, which crashes the tablet's UI
+(see `../AGENTS.md`). `backend/lifecycle.go` makes it exit once an update has
+replaced it and the app is closed.
 
 The fonts are bundled so that `¿ ¡ « » —` and accented letters always render:
 Noto Serif, IBM Plex Sans and Atkinson Hyperlegible (all SIL Open Font

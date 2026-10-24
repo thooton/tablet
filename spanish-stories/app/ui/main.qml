@@ -3,7 +3,7 @@ import net.asivery.AppLoad 1.0
 import "components"
 import "js/theme.js" as Theme
 
-// Spanish Reader: tap-to-translate Spanish stories for the reMarkable.
+// Biblioteca: tap-to-translate Spanish stories for the reMarkable.
 // Entry point loaded by AppLoad (see manifest.json).
 Rectangle {
     id: root
@@ -12,8 +12,11 @@ Rectangle {
 
     // Required by AppLoad.
     signal close
+    // Never call backend.terminate() here (or anywhere): AppLoad then
+    // unloads the app from its socket thread and the tablet's UI crashes
+    // and restarts. The backend stays running and is reused next time
+    // (backend/lifecycle.go).
     function unloading() {
-        backend.terminate();
     }
 
     // Each static weight is its own file; Qt files them under one family and

@@ -56,7 +56,7 @@ for MACHINE in armv7l aarch64; do
     pass "install.sh and uninstall.sh are executable after unpacking"
 
     out="$(run_sh "$PKG/install.sh")" || fail "install.sh: $out"
-    echo "$out" | grep -q "Installed Spanish Reader" || fail "install.sh said: $out"
+    echo "$out" | grep -q "Installed Biblioteca" || fail "install.sh said: $out"
     pass "install.sh: $(echo "$out" | head -1)"
     for f in manifest.json icon.png resources.rcc FONTS-LICENSE.txt backend/entry stories; do
         [ -e "$APP/$f" ] || fail "missing $f"

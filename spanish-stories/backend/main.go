@@ -1,4 +1,4 @@
-// Command entry is the AppLoad backend of the Spanish Reader app. AppLoad
+// Command entry is the AppLoad backend of the Biblioteca app. AppLoad
 // starts it as <app dir>/backend/entry with the path of a unix socket as its
 // only argument (the desktop emulator passes "tcp:<host>:<port>" instead).
 //
@@ -69,6 +69,8 @@ func main() {
 	root := appRoot()
 	app := newApp(storyDirs(root), statePath())
 	logf("started; app root %s, state %s", root, app.statePath)
+	life := newLifecycle(executable(), nil)
+	go life.watch()
 
 	for {
 		msgType, body, err := conn.recv()
@@ -76,6 +78,7 @@ func main() {
 			logf("connection closed: %v", err)
 			return
 		}
+		life.seen(msgType, body)
 		for _, r := range app.handle(msgType, body) {
 			data, err := json.Marshal(r.Body)
 			if err != nil {

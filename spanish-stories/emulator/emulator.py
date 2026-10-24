@@ -1,4 +1,4 @@
-"""Desktop emulator for the Spanish Reader reMarkable app.
+"""Desktop emulator for the Biblioteca reMarkable app.
 
 Runs the real app (the QML compiled into resources.rcc plus the Go backend)
 the way AppLoad runs it inside xochitl on the tablet:
@@ -231,7 +231,7 @@ class Emulator:
 
         self.closed = False
         self.view = QQuickView()
-        self.view.setTitle("Spanish Reader - reMarkable 2 emulator")
+        self.view.setTitle("Biblioteca - reMarkable 2 emulator")
         self.view.setResizeMode(QQuickView.SizeRootObjectToView)
         self.view.setColor(Qt.white)
         self.view.setInitialProperties({"appUrl": QUrl(f"qrc:/{prefix}/ui/main.qml"), "deviceScale": scale})
@@ -268,7 +268,7 @@ class Emulator:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="reMarkable 2 emulator for Spanish Reader")
+    ap = argparse.ArgumentParser(description="reMarkable 2 emulator for Biblioteca")
     ap.add_argument("--fresh", action="store_true", help="start with no saved progress")
     ap.add_argument("--scale", type=float, default=0.0, help="window scale (default: fit the screen)")
     ap.add_argument("--verbose", action="store_true", help="log every backend message")

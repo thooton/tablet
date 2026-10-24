@@ -1,5 +1,5 @@
 #!/bin/sh
-# Removes Spanish Reader from AppLoad. Runs on the reMarkable itself:
+# Removes Biblioteca from AppLoad. Runs on the reMarkable itself:
 #
 #     sh /home/root/spanish-stories/uninstall.sh          # keep reading progress
 #     sh /home/root/spanish-stories/uninstall.sh --purge  # forget it too
@@ -18,7 +18,7 @@ if [ -e "$DIR" ] || [ -L "$DIR" ]; then
     rm -rf "$DIR" "$DIR.new"
     echo "Removed the app from AppLoad. Tap Reload in AppLoad (or restart the tablet)."
 else
-    echo "Spanish Reader is not installed in $APPLOAD."
+    echo "Biblioteca is not installed in $APPLOAD."
 fi
 rm -f /tmp/spanish-reader.sock
 
