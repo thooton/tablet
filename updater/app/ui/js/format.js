@@ -57,22 +57,18 @@ function capsule(app) {
     return null;
 }
 
-// The line under an app's name, as parts set apart by space (never a
-// separator character).
-function versionParts(app) {
-    var when = app.notes.length ? date(app.notes[0].time) : "";
-    var parts = [];
+// The line under an app's name: the version, then the date of its newest
+// change (or, not installed, its size) in parentheses.
+function versionLine(app) {
+    var v;
     if (app.status === "update" && !(app.job && app.job.phase === "done"))
-        parts.push(app.installedVersion ? app.installedVersion + " → " + app.version : app.version);
+        v = app.installedVersion ? app.installedVersion + " → " + app.version : app.version;
     else if (app.status === "newer")
-        parts.push(app.installedVersion + " (latest " + app.version + ")");
+        return app.installedVersion + " (latest " + app.version + ")";
     else
-        parts.push(app.version);
-    if (app.status === "get")
-        parts.push(size(app.size));
-    else if (when)
-        parts.push(when);
-    return parts;
+        v = app.version;
+    var aside = app.status === "get" ? size(app.size) : app.notes.length ? date(app.notes[0].time) : "";
+    return aside ? v + " (" + aside + ")" : v;
 }
 
 // The last line: what went wrong, or what's new.
