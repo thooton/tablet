@@ -73,9 +73,8 @@ Item {
             Text {
                 width: parent.width
                 wrapMode: Text.Wrap
-                text: (box.app.installed ? "On this tablet: " + (box.app.installedVersion || "an old version")
-                                         : "Not on this tablet")
-                      + "\nIn the release: " + box.app.version + " (" + Format.size(box.app.size) + ")"
+                text: (box.app.installed && box.app.installedVersion ? "Installed " + box.app.installedVersion + "  ·  " : "")
+                      + "Latest " + box.app.version + "  ·  " + Format.size(box.app.size)
                 color: Theme.ink
                 font.family: box.fonts.sans
                 font.pixelSize: 34
@@ -85,7 +84,7 @@ Item {
                 width: parent.width
                 visible: box.app.job !== null && box.app.job.phase === "failed"
                 wrapMode: Text.Wrap
-                text: box.app.job ? "The last try failed: " + (box.app.job.message || "") : ""
+                text: box.app.job ? box.app.job.message || "" : ""
                 color: Theme.ink
                 font.family: box.fonts.sansSemi
                 font.weight: Font.DemiBold

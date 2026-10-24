@@ -158,11 +158,11 @@ func friendly(err error) string {
 	s := err.Error()
 	for _, offline := range []string{"no such host", "network is unreachable", "connection refused", "i/o timeout", "dial tcp"} {
 		if strings.Contains(s, offline) {
-			return "Couldn't reach GitHub. Check that Wi-Fi is on, then try again."
+			return "No connection."
 		}
 	}
 	if strings.Contains(s, "certificate") {
-		return "Couldn't check GitHub's certificate. Is the tablet's clock right? (" + s + ")"
+		return "Certificate error: " + s
 	}
 	return s
 }

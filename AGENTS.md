@@ -34,7 +34,8 @@ so a change shipped without a bump never reaches the tablet.
 Lead each commit subject with the app and its new version, then a sentence:
 `Biblioteca 1.0.1: fix the page count after a font change`. The
 Updater's What's New shows each app's ten newest commits with the lead cut
-off (`.github/manifest.py`), so write the rest for the user.
+off (`.github/manifest.py`), so write the rest for the user: short,
+what changed, no explanation.
 
 ## What an app looks like
 
@@ -69,7 +70,9 @@ workflow or the Updater.
 The tablet: 1404×1872 e-ink (226 dpi), touch and pen, no keyboard. Draw in
 black on white; greys wash out. Avoid animation and frequent redraws (each
 costs a visible refresh): change a progress figure every few percent, not
-every frame. Make tap targets large. The QML is Qt 6 (`import QtQuick`, no
+every frame. Make tap targets large. Keep on-screen text to labels and facts
+("No connection.", "Reload AppLoad to apply."): no instructions,
+reassurance or explanations; the user knows the device. The QML is Qt 6 (`import QtQuick`, no
 versions). The root item needs `signal close` and `function unloading()`,
 and talks to its backend through `AppLoad { applicationID: "<id>" }`
 (`sendMessage(type, json)` / `onMessageReceived`). AppLoad sends the backend

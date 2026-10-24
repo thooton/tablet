@@ -308,7 +308,7 @@ func TestCheckOffline(t *testing.T) {
 	defer app.close()
 	app.handle(msgCheck, nil)
 	s := rec.waitFor(t, "the error", func(s State) bool { return !s.Checking && s.Error != "" })
-	if !strings.Contains(s.Error, "Wi-Fi") {
+	if s.Error != "No connection." {
 		t.Errorf("error %q", s.Error)
 	}
 }

@@ -192,7 +192,7 @@ Rectangle {
         Notice {
             objectName: "reloadNotice"
             visible: root.info !== null && root.info.reload && !root.info.busy
-            text: "Installed. To open the new versions, close the Updater, then tap Reload in AppLoad's menu."
+            text: "Reload AppLoad to apply."
         }
         Notice {
             objectName: "errorNotice"
@@ -318,11 +318,10 @@ Rectangle {
             wrapMode: Text.Wrap
             lineHeight: 1.3
             text: root.info === null
-                  ? (root.attempts > 6 ? "The Updater's backend isn't answering.\nClose the Updater and open it again. If that doesn't help, run /home/root/updater/install.sh again."
-                                       : "Checking for updates…")
-                  : root.info.checking ? "Checking for updates…"
+                  ? (root.attempts > 6 ? "Backend not responding." : "Checking…")
+                  : root.info.checking ? "Checking…"
                   : root.info.error !== "" ? ""
-                  : "The release has no apps yet."
+                  : "No apps."
             color: Theme.ink
             font.family: fontSet.sans
             font.pixelSize: 34

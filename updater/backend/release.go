@@ -101,7 +101,7 @@ func (r *release) manifest(ctx context.Context) (*Manifest, error) {
 		return nil, fmt.Errorf("manifest.json: %v", err)
 	}
 	if m.Schema != 1 {
-		return nil, fmt.Errorf("manifest.json is schema %d; this Updater reads schema 1, so update it by hand", m.Schema)
+		return nil, fmt.Errorf("unsupported manifest schema %d", m.Schema)
 	}
 	for dir, e := range m.Apps {
 		if !validDir(dir) || e.ID == "" || !validDir(e.ID) || e.Version == "" || e.Archive == "" {

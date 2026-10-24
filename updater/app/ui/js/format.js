@@ -62,11 +62,11 @@ function versionLine(app) {
     var when = app.notes.length ? date(app.notes[0].time) : "";
     var parts = [];
     if (app.status === "update" && !(app.job && app.job.phase === "done"))
-        parts.push((app.installedVersion || "Old version") + " → " + app.version);
+        parts.push(app.installedVersion ? app.installedVersion + " → " + app.version : app.version);
     else if (app.status === "newer")
-        parts.push(app.installedVersion + " here, " + app.version + " in the release");
+        parts.push(app.installedVersion + " (latest " + app.version + ")");
     else
-        parts.push("Version " + app.version);
+        parts.push(app.version);
     if (app.status === "get")
         parts.push(size(app.size));
     else if (when)
