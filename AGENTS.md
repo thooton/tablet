@@ -72,7 +72,9 @@ black on white; greys wash out. Avoid animation and frequent redraws (each
 costs a visible refresh): change a progress figure every few percent, not
 every frame. Make tap targets large. Keep on-screen text to labels and facts
 ("No connection.", "Reload AppLoad to apply."): no instructions,
-reassurance or explanations; the user knows the device. The QML is Qt 6 (`import QtQuick`, no
+reassurance or explanations; the user knows the device. Never use `·` as a
+separator: set items apart with space (a `Row` with `spacing`), or `|` if
+space isn't enough. The QML is Qt 6 (`import QtQuick`, no
 versions). The root item needs `signal close` and `function unloading()`,
 and talks to its backend through `AppLoad { applicationID: "<id>" }`
 (`sendMessage(type, json)` / `onMessageReceived`). AppLoad sends the backend

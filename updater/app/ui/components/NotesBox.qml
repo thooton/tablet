@@ -70,15 +70,18 @@ Item {
             width: parent.width - 6 - 108
             spacing: 30
 
-            Text {
-                width: parent.width
-                wrapMode: Text.Wrap
-                text: (box.app.installed && box.app.installedVersion ? "Installed " + box.app.installedVersion + "  ·  " : "")
-                      + "Latest " + box.app.version + "  ·  " + Format.size(box.app.size)
-                color: Theme.ink
-                font.family: box.fonts.sans
-                font.pixelSize: 34
-                lineHeight: 1.3
+            Row {
+                spacing: 44
+                Repeater {
+                    model: (box.app.installed && box.app.installedVersion ? ["Installed " + box.app.installedVersion] : [])
+                           .concat(["Latest " + box.app.version, Format.size(box.app.size)])
+                    delegate: Text {
+                        text: modelData
+                        color: Theme.ink
+                        font.family: box.fonts.sans
+                        font.pixelSize: 34
+                    }
+                }
             }
             Text {
                 width: parent.width
@@ -105,12 +108,18 @@ Item {
                 delegate: Column {
                     width: content.width
                     spacing: 4
-                    Text {
-                        text: Format.date(modelData.time) + (modelData.version ? "  ·  " + modelData.version : "")
-                        color: Theme.ink
-                        font.family: box.fonts.sansMedium
-                        font.weight: Font.Medium
-                        font.pixelSize: 28
+                    Row {
+                        spacing: 28
+                        Repeater {
+                            model: [Format.date(modelData.time)].concat(modelData.version ? [modelData.version] : [])
+                            delegate: Text {
+                                text: modelData
+                                color: Theme.ink
+                                font.family: box.fonts.sansMedium
+                                font.weight: Font.Medium
+                                font.pixelSize: 28
+                            }
+                        }
                     }
                     Text {
                         width: parent.width

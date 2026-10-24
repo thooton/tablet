@@ -73,13 +73,19 @@ Item {
             font.weight: Font.DemiBold
             font.pixelSize: 44
         }
-        Text {
+        Row {
             width: parent.width
-            elide: Text.ElideRight
-            text: Format.versionLine(row.app)
-            color: Theme.ink
-            font.family: row.fonts.sans
-            font.pixelSize: 31
+            spacing: 36
+            clip: true
+            Repeater {
+                model: Format.versionParts(row.app)
+                delegate: Text {
+                    text: modelData
+                    color: Theme.ink
+                    font.family: row.fonts.sans
+                    font.pixelSize: 31
+                }
+            }
         }
         Text {
             width: parent.width

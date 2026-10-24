@@ -41,17 +41,24 @@ Rectangle {
         font.weight: Font.DemiBold
         font.pixelSize: 34
     }
-    Text {
-        objectName: "toolbarTime"
+    // Time left and % read, set apart by space (no separator character).
+    Row {
         y: 118
-        width: parent.width
         height: 38
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        text: (bar.minutesLeft <= 1 ? "1 min restante" : bar.minutesLeft + " min restantes") + " · " + bar.percent + "%"
-        color: Theme.ink2
-        font.family: bar.fonts.sans
-        font.pixelSize: 30
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 32
+        Repeater {
+            model: [bar.minutesLeft <= 1 ? "1 min restante" : bar.minutesLeft + " min restantes", bar.percent + "%"]
+            delegate: Text {
+                objectName: index === 0 ? "toolbarTime" : "toolbarPercent"
+                height: 38
+                verticalAlignment: Text.AlignVCenter
+                text: modelData
+                color: Theme.ink2
+                font.family: bar.fonts.sans
+                font.pixelSize: 30
+            }
+        }
     }
 
     Item {

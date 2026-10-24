@@ -57,8 +57,9 @@ function capsule(app) {
     return null;
 }
 
-// The line under an app's name.
-function versionLine(app) {
+// The line under an app's name, as parts set apart by space (never a
+// separator character).
+function versionParts(app) {
     var when = app.notes.length ? date(app.notes[0].time) : "";
     var parts = [];
     if (app.status === "update" && !(app.job && app.job.phase === "done"))
@@ -71,7 +72,7 @@ function versionLine(app) {
         parts.push(size(app.size));
     else if (when)
         parts.push(when);
-    return parts.join("  ·  ");
+    return parts;
 }
 
 // The last line: what went wrong, or what's new.
