@@ -15,8 +15,11 @@ Rectangle {
 
     // Required by AppLoad.
     signal close
+    // Never call backend.terminate() here (or anywhere): AppLoad then
+    // unloads the app from its socket thread and the tablet's UI crashes
+    // and restarts. The backend stays running and is reused next time
+    // (backend/lifecycle.go).
     function unloading() {
-        backend.terminate();
     }
 
     QtObject {

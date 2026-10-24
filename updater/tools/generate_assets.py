@@ -1,4 +1,4 @@
-"""Draws the Updater's AppLoad icon, in the frame Spanish Reader's has.
+"""Draws the Updater's AppLoad icon, in the frame Biblioteca's has.
 
 Run with the emulator's Python (it needs PySide6):
     python tools/generate_assets.py

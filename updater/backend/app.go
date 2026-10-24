@@ -109,11 +109,13 @@ func (a *App) handle(msgType int32, body []byte) {
 		json.Unmarshal(body, &req)
 		a.cancelQueued(req.App)
 	case msgState, msgSystemNewCoordinator:
-		// Opening the Updater checks for updates.
+		// Opening the Updater checks for updates. The backend outlives the
+		// window (see lifecycle.go), so a reopened one checks again unless
+		// it checked a moment ago or is installing.
 		a.mu.Lock()
-		fresh := a.manifest == nil && a.checkErr == ""
+		stale := !a.working && time.Since(a.checked) > time.Minute
 		a.mu.Unlock()
-		if fresh {
+		if stale {
 			a.check()
 		} else {
 			a.publish()
@@ -388,11 +390,19 @@ func (a *App) status(e Entry) string {
 	}
 }
 
+func (a *App) busy() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.working || a.checking
+}
+
 func (a *App) publish() {
 	a.send(msgStateReply, a.state())
 }
 
-// close is AppLoad closing the app. Apps still waiting are dropped and a
+// close is AppLoad stopping the backend (-1, or the socket closing), which
+// only happens if something calls terminate(): closing the window leaves the
+// backend running, installs and all. Apps still waiting are dropped and a
 // download stops; an install already unpacking finishes. It returns once
 // nothing is left running.
 func (a *App) close() {

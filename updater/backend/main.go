@@ -59,6 +59,8 @@ func main() {
 	}
 	app := newApp(rel, appload, home, cache, send)
 	logf("started; AppLoad %s, packages in %s, release %s", appload, home, rel.base)
+	life := newLifecycle(executable(), app.busy)
+	go life.watch()
 
 	for {
 		msgType, body, err := conn.recv()
@@ -66,6 +68,7 @@ func main() {
 			logf("connection closed: %v", err)
 			break
 		}
+		life.seen(msgType, body)
 		if msgType == msgSystemTerminate {
 			break
 		}

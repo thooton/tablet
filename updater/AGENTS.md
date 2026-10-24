@@ -2,7 +2,7 @@
 
 The Updater: an AppLoad app that installs and updates every app in this
 repository on the tablet, from the rolling `latest` release. The tablet's
-counterpart of the Updater in thooton/sonim, drawn like Spanish Reader's
+counterpart of the Updater in thooton/sonim, drawn like Biblioteca's
 library (white paper, black ink, IBM Plex Sans).
 
 ## How it works
@@ -38,10 +38,16 @@ before it opens new QML.
 
 Tapping a row opens What's New (the versions, the newest commits, why the
 last try failed, and GET, UPDATE or INSTALL AGAIN). WAITING cancels a
-queued app. Closing the Updater drops what's still waiting and stops a
-download; an install already unpacking finishes first (a flock on
-`~/.cache/updater/lock` keeps a new backend from starting another
-meanwhile).
+queued app.
+
+Closing the Updater leaves the backend running (AppLoad reuses it; see
+`backend/lifecycle.go` and "Never call terminate()" in `../AGENTS.md`), so
+installs carry on, and reopening shows them; it checks again if the last
+check is over a minute old and nothing is installing. Once the Updater has
+updated itself, its old backend exits when the window has been closed for a
+few seconds and nothing is running, and the next open starts the new one.
+A flock on `~/.cache/updater/lock` keeps two backends from installing at
+once.
 
 ## Messages
 
@@ -53,14 +59,15 @@ meanwhile).
 | 4 | | `{"app": dir}`: take a waiting app out of the queue |
 | 101 | backend → UI | the whole state (`State` in `backend/app.go`), after every change |
 
-The backend also checks when a frontend attaches (-2) and it hasn't yet.
+The backend also checks when a frontend attaches (-2), as above.
 
 ## Layout
 
 - `backend/`: `release.go` (manifest.json, downloads), `install.go`
   (versions, unpacking, merging, running install.sh), `app.go` (the state,
-  the queue), `main.go`, `transport.go` (AppLoad's protocol, as Spanish
-  Reader's). `UPDATER_HOME`, `UPDATER_APPLOAD` and `UPDATER_RELEASE`
+  the queue), `main.go`, `lifecycle.go` (when to exit after an update),
+  `transport.go` (AppLoad's protocol). The last two are the same as Spanish
+  Reader's. `UPDATER_HOME`, `UPDATER_APPLOAD` and `UPDATER_RELEASE`
   override `/home/root`, the AppLoad folder and the release URL, for tests
   and the emulator.
 - `app/ui/`: `main.qml` (header, notices, the paged list), `components/`
