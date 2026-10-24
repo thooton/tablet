@@ -9,8 +9,9 @@
 # updates the app; reading progress is kept.
 set -e
 PKG="$(cd "$(dirname "$0")" && pwd)"
-# The overrides exist only for emulator/device_test.sh.
-APPLOAD="${SPANISH_READER_APPLOAD:-/home/root/xovi/exthome/appload}"
+# APPLOAD_DIR is set by the Updater; the SPANISH_READER_ overrides exist
+# only for emulator/device_test.sh.
+APPLOAD="${SPANISH_READER_APPLOAD:-${APPLOAD_DIR:-/home/root/xovi/exthome/appload}}"
 MACHINE="${SPANISH_READER_MACHINE:-$(uname -m)}"
 DIR="$APPLOAD/spanish-reader"
 

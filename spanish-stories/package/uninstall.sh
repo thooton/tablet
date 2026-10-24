@@ -8,8 +8,9 @@
 #     rm -r /home/root/spanish-stories
 # if you want everything gone.
 PKG="$(cd "$(dirname "$0")" && pwd)"
-# The overrides exist only for emulator/device_test.sh.
-APPLOAD="${SPANISH_READER_APPLOAD:-/home/root/xovi/exthome/appload}"
+# APPLOAD_DIR as in install.sh; the SPANISH_READER_ overrides exist
+# only for emulator/device_test.sh.
+APPLOAD="${SPANISH_READER_APPLOAD:-${APPLOAD_DIR:-/home/root/xovi/exthome/appload}}"
 DATA="${SPANISH_READER_HOME:-$HOME}/.local/share/spanish-reader"
 DIR="$APPLOAD/spanish-reader"
 

@@ -4,5 +4,6 @@
     "entry": "/ui/main.qml",
     "loadsBackend": true,
     "supportsScaling": false,
-    "canHaveMultipleFrontends": false
+    "canHaveMultipleFrontends": false,
+    "version": "1.0.0"
 }

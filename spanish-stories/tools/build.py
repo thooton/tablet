@@ -40,7 +40,7 @@ def find_rcc() -> str:
                 return str(candidate)
     except ImportError:
         pass
-    for name in ("rcc", "rcc-qt6", "/usr/lib/qt6/libexec/rcc", "/usr/lib/qt6/bin/rcc", "/usr/lib64/qt6/libexec/rcc"):
+    for name in ("rcc", "rcc-qt6", "/usr/lib/qt6/libexec/rcc", "/usr/lib/qt6/bin/rcc", "/usr/lib/qt6/rcc", "/usr/lib64/qt6/libexec/rcc"):
         found = shutil.which(name) or (name if Path(name).exists() else None)
         if found:
             return found

@@ -38,17 +38,22 @@ More screens are in [`docs/screens/`](docs/screens).
   These need firmware **3.22 or newer**. Follow the step-by-step guide:
   <https://xovi.bearblog.dev/appload/>.
 
-## Install (all on the tablet)
+## Install
+
+With the **Updater** on the tablet (`../updater`), open it and tap **GET**
+beside Spanish Reader; it installs updates the same way. By hand:
 
 Everything lives in one folder on the tablet, `/home/root/spanish-stories`,
 which holds `install.sh`, `uninstall.sh`, the app and the stories.
 
-1. Copy `dist/spanish-stories.zip` (or `dist/spanish-stories.tar.gz`) to the
-   tablet. Over USB the tablet is at `10.11.99.1`. The root password is under
+1. Download `spanish-stories.tar.gz` from the
+   [latest release](https://github.com/thooton/tablet/releases/tag/latest)
+   (or build it, below) and copy it to the tablet. Over USB the tablet is at
+   `10.11.99.1`. The root password is under
    **Settings → Help → Copyrights and licenses**.
 
    ```bash
-   scp dist/spanish-stories.zip root@10.11.99.1:
+   scp spanish-stories.tar.gz root@10.11.99.1:
    ```
 
 2. On the tablet (`ssh root@10.11.99.1`), unpack the archive in `/home/root`
@@ -56,19 +61,19 @@ which holds `install.sh`, `uninstall.sh`, the app and the stories.
 
    ```bash
    cd /home/root
-   unzip -o spanish-stories.zip
+   tar -xzf spanish-stories.tar.gz
    /home/root/spanish-stories/install.sh
    ```
 
-   `tar -xzf spanish-stories.tar.gz` works too. The installer checks that
-   AppLoad is there (if it is missing, it prints where to get it) and installs
-   the build that matches the tablet's CPU.
+   The installer checks that AppLoad is there (if it is missing, it prints
+   where to get it) and installs the build that matches the tablet's CPU.
 
 3. Open the **AppLoad** menu, tap **Reload**, and tap **Spanish Reader**. The
    **←** in the library closes the app.
 
 To update, unpack a newer archive over the same folder and run `install.sh`
-again. Your reading progress and your own stories are kept.
+again (the Updater does exactly this). Your reading progress and your own
+stories are kept.
 
 ## Uninstall
 
@@ -165,14 +170,17 @@ which file and why.
 
 ## Building
 
-The ready-to-copy archives are already in `dist/`. To rebuild them after
-changing the code or stories, you need Go 1.21+ and Python with PySide6
-(which provides Qt's `rcc`):
+CI builds `dist/spanish-stories.tar.gz` on every push to master and
+publishes it to the repository's `latest` release, where the Updater finds
+it; `dist/` isn't committed. **Raise `"version"` in `app/manifest.json` with
+every change** (see `../AGENTS.md`), or the Updater won't offer it. To build
+it yourself you need Go 1.21+ and Python with PySide6 (which provides Qt's
+`rcc`; or set `RCC=/path/to/rcc`):
 
 ```bash
 pip install PySide6
 python tools/story_from_text.py --all   # stories/src/*.txt -> stories/*.json
-python tools/build.py                   # -> dist/spanish-stories/, .zip, .tar.gz
+python tools/build.py                   # -> dist/spanish-stories/, .tar.gz, .zip
 ```
 
 ## Trying it on a computer (emulator)
@@ -202,7 +210,7 @@ Tests:
 ```
 package/               install.sh, uninstall.sh, README.txt for the tablet
 app/
-  manifest.json        AppLoad app description (id, entry point, uses a backend)
+  manifest.json        AppLoad app description (id, entry point, uses a backend, version)
   application.qrc      -> resources.rcc: the QML user interface + fonts + images
   ui/main.qml          root item; talks to the backend through AppLoad
   ui/LibraryView.qml   story list with level tabs
