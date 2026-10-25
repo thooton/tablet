@@ -69,6 +69,9 @@ def parse_text(text: str, name: str = "<story>") -> dict:
                 if end < 0:
                     raise StoryError(f"{name}, paragraph {p_index + 1}: unclosed '[' near {para[pos:pos + 30]!r}")
                 inner = para[pos + 1:end]
+                if "[" in inner:
+                    raise StoryError(f"{name}, paragraph {p_index + 1}: missing ']' in "
+                                     f"[{inner[:inner.index('[')]}")
                 if "|" not in inner:
                     raise StoryError(f"{name}, paragraph {p_index + 1}: [{inner}] has no '|english' part")
                 es, en = inner.split("|", 1)
