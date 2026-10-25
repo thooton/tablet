@@ -2,7 +2,9 @@ import QtQuick
 import "../js/theme.js" as Theme
 
 // Bottom half of the toolbar: page number, time left and a slider that
-// jumps through the story (it moves on release, to spare the e-ink).
+// jumps through the story (it moves on release, to spare the e-ink). A
+// story too long to lay out whole has no page numbers (pageCount 0): its
+// slider goes by percent.
 Rectangle {
     id: bar
     property int pageIndex: 0
@@ -11,11 +13,14 @@ Rectangle {
     property int percent: 0
     property QtObject fonts
     signal seek(int pageIndex)
+    signal seekPercent(int percent)
 
-    // While dragging: the page the knob points at.
+    readonly property bool paged: pageCount > 0
+    readonly property int steps: paged ? pageCount : 101
+    // While dragging: the page (or percent) the knob points at.
     property int preview: -1
-    readonly property int shownPage: preview >= 0 ? preview : pageIndex
-    readonly property real fraction: pageCount > 1 ? shownPage / (pageCount - 1) : 0
+    readonly property int shown: preview >= 0 ? preview : (paged ? pageIndex : percent)
+    readonly property real fraction: steps > 1 ? shown / (steps - 1) : 0
 
     width: Theme.screenWidth
     height: 292
@@ -35,7 +40,7 @@ Rectangle {
         height: 40
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        text: "Página " + (bar.shownPage + 1) + " de " + bar.pageCount
+        text: bar.paged ? "Página " + (bar.shown + 1) + " de " + bar.pageCount : bar.shown + "%"
         color: Theme.ink
         font.family: bar.fonts.sansSemi
         font.weight: Font.DemiBold
@@ -48,7 +53,8 @@ Rectangle {
         height: 38
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        text: (bar.minutesLeft <= 1 ? "1 min restante" : bar.minutesLeft + " min restantes") + "  |  " + bar.percent + "%"
+        text: (bar.minutesLeft <= 1 ? "1 min restante" : bar.minutesLeft + " min restantes")
+              + (bar.paged ? "  |  " + bar.percent + "%" : "")
         color: Theme.ink2
         font.family: bar.fonts.sans
         font.pixelSize: 30
@@ -89,14 +95,17 @@ Rectangle {
             anchors.margins: -30
             function pageAt(mx) {
                 var f = Math.max(0, Math.min(1, (mx - 30) / slider.width));
-                return Math.round(f * (bar.pageCount - 1));
+                return Math.round(f * (bar.steps - 1));
             }
             onPressed: mouse => bar.preview = pageAt(mouse.x)
             onPositionChanged: mouse => bar.preview = pageAt(mouse.x)
             onReleased: mouse => {
                 var target = pageAt(mouse.x);
                 bar.preview = -1;
-                bar.seek(target);
+                if (bar.paged)
+                    bar.seek(target);
+                else if (target !== bar.percent)
+                    bar.seekPercent(target);
             }
             onCanceled: bar.preview = -1
         }

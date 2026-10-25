@@ -43,7 +43,20 @@ type Story struct {
 	Description string  `json:"description"`
 	Author      string  `json:"author,omitempty"`
 	Words       int     `json:"words"`
-	Tokens      []Token `json:"tokens"`
+	Tokens      []Token `json:"-"`
+}
+
+func (s *Story) MarshalJSON() ([]byte, error) {
+	type story Story
+	return json.Marshal(struct {
+		*story
+		TokenCount int `json:"tokenCount"`
+	}{(*story)(s), len(s.Tokens)})
+}
+
+// As in the frontend's layout.js.
+func isParagraphBreak(es string) bool {
+	return es == "\n" || es == "\n\n" || es == "¶"
 }
 
 type StoryError struct {

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -16,9 +17,11 @@ const (
 	reqLookup   int32 = 4 // {"id","es"}                     -> (nothing)
 	reqSettings int32 = 5 // {"textSize","font",...}        -> respSettings
 	reqReset    int32 = 6 // {"id"}                          -> respLibrary
+	reqTokens   int32 = 7 // {"id","seq","from"|"before","paragraph"} -> respTokens
 
 	respLibrary  int32 = 101
-	respStory    int32 = 102
+	respStory    int32 = 102 // the story without its text, which comes in respTokens
+	respTokens   int32 = 103 // {"id","seq","from","tokens","atParagraph"}
 	respSettings int32 = 105
 	respError    int32 = 199
 )
@@ -125,10 +128,14 @@ func (a *App) story(id string) (*Story, error) {
 // handle processes one message and returns the replies to send back.
 func (a *App) handle(msgType int32, body []byte) []reply {
 	var req struct {
-		ID       string `json:"id"`
-		Token    *int   `json:"token"`
-		Finished *bool  `json:"finished"`
-		Es       string `json:"es"`
+		ID        string `json:"id"`
+		Token     *int   `json:"token"`
+		Finished  *bool  `json:"finished"`
+		Es        string `json:"es"`
+		Seq       int    `json:"seq"`
+		From      *int   `json:"from"`
+		Before    *int   `json:"before"`
+		Paragraph bool   `json:"paragraph"`
 	}
 	if msgType > 0 && len(body) > 0 {
 		if err := json.Unmarshal(body, &req); err != nil {
@@ -156,6 +163,23 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 			"progress": p,
 			"settings": a.state.Settings,
 		}}}
+
+	case reqTokens:
+		s, err := a.story(req.ID)
+		if err != nil {
+			return []reply{errorReply(msgType, err.Error())}
+		}
+		from, before := 0, -1
+		if req.From != nil {
+			from = *req.From
+		}
+		if req.Before != nil {
+			before = *req.Before
+		}
+		chunk := tokenChunk(s, from, before, req.Paragraph)
+		chunk["id"] = s.ID
+		chunk["seq"] = req.Seq
+		return []reply{{respTokens, chunk}}
 
 	case reqProgress:
 		if _, err := a.story(req.ID); err != nil {
@@ -201,6 +225,67 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 		return nil
 	}
 	return []reply{errorReply(msgType, fmt.Sprintf("unknown message type %d", msgType))}
+}
+
+// The text goes to the frontend a chunk at a time, as it reads. On the
+// tablet each message is one SOCK_SEQPACKET packet, which the kernel refuses
+// when it is larger than the socket's send buffer (about 208 KiB), and a
+// chunk is all the frontend has to parse and lay out at once.
+const (
+	maxChunkBytes  = 60 * 1024
+	maxChunkTokens = 1500
+)
+
+// tokenChunk returns the tokens from `from` on, or, when before >= 0, the
+// ones just before `before`. With paragraph set, `from` moves back to the
+// start of its paragraph (for a jump into the middle of the text).
+func tokenChunk(s *Story, from, before int, paragraph bool) map[string]any {
+	n := len(s.Tokens)
+	encoded := func(i int) json.RawMessage {
+		data, _ := json.Marshal(s.Tokens[i])
+		return data
+	}
+	var tokens []json.RawMessage
+	size := 0
+	fits := func(data json.RawMessage) bool {
+		return len(tokens) == 0 || (len(tokens) < maxChunkTokens && size+len(data)+1 <= maxChunkBytes)
+	}
+	var start int
+	if before >= 0 {
+		end := min(before, n)
+		start = end
+		for start > 0 {
+			data := encoded(start - 1)
+			if !fits(data) {
+				break
+			}
+			tokens = append(tokens, data)
+			size += len(data) + 1
+			start--
+		}
+		slices.Reverse(tokens)
+	} else {
+		start = max(0, min(from, n))
+		for paragraph && start > 0 && !isParagraphBreak(s.Tokens[start-1].Es) {
+			start--
+		}
+		for i := start; i < n; i++ {
+			data := encoded(i)
+			if !fits(data) {
+				break
+			}
+			tokens = append(tokens, data)
+			size += len(data) + 1
+		}
+	}
+	if tokens == nil {
+		tokens = []json.RawMessage{}
+	}
+	return map[string]any{
+		"from":        start,
+		"tokens":      tokens,
+		"atParagraph": start > 0 && isParagraphBreak(s.Tokens[start-1].Es),
+	}
 }
 
 func errorReply(request int32, message string) reply {

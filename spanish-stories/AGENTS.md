@@ -232,10 +232,21 @@ The two exchange JSON messages over a unix socket:
 | Type | Direction | Meaning |
 |---|---|---|
 | 1 / 101 | UI → backend / reply | get the library (stories and progress, last read first) |
-| 2 / 102 | | open a story (full text and saved position) |
+| 2 / 102 | | open a story (its title, length and saved position, not its text) |
+| 7 / 103 | | a chunk of its text: the tokens from a position on, or just before one |
 | 3 | | save the reading position, or mark the story read |
 | 5 / 105 | | save the text settings |
 | 6 / 101 | | reset a story's progress |
+
+The reader fetches the text as it goes, like a video player: it holds a
+window of at most 6000 tokens around the page on screen, keeps the next
+chunk loaded and forgets pages well behind. A chunk is at most 1500 tokens
+and 60 KiB, because on the tablet every message is one `SOCK_SEQPACKET`
+packet, which the kernel refuses past the socket's send buffer (about
+208 KiB), and a backend that then quits crashes the tablet's UI. A story
+that fits in the window is held whole and has page numbers; a longer one
+(a novel) shows the percent read, and its slider jumps by percent. Reading
+backwards past where it was opened, or jumped to, starts a new page there.
 
 Progress is saved to `/home/root/.local/share/spanish-reader/state.json`.
 

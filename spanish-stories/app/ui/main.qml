@@ -46,7 +46,7 @@ Rectangle {
     property string view: "library"     // library | opening | reader
     property var library: null          // {stories, errors, settings, dirs}
     property var settings: ({ textSize: Theme.defaultTextSize, font: "serif", dots: true, footer: false })
-    property var story: null            // {id, title, level, words, tokens: [[es, [en]]]}
+    property var story: null            // {id, title, level, words, tokenCount}
     property var progress: null         // {token, finished}
     property string errorText: ""
     property int attempts: 0
@@ -75,10 +75,14 @@ Rectangle {
             applySettings(data.settings);
             break;
         case 102:
+            // The text follows in 103 chunks, as the reader asks for it.
             applySettings(data.settings);
             progress = data.progress;
             story = data.story;
-            view = "reader";
+            break;
+        case 103:
+            if (story && data.id === story.id)
+                reader.receiveTokens(data);
             break;
         case 105:
             applySettings(data);
@@ -159,6 +163,14 @@ Rectangle {
         onMarkFinished: root.send(3, { id: root.story.id, finished: true })
         onResetProgress: root.send(6, { id: root.story.id })
         onChangeSetting: (key, value) => root.setSetting(key, value)
+        onRequestTokens: request => {
+            request.id = root.story.id;
+            root.send(7, request);
+        }
+        onPagesChanged: {
+            if (pages.length && root.view === "opening")
+                root.view = "reader";
+        }
     }
 
     MessageBox {

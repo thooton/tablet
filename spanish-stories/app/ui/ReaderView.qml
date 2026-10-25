@@ -12,7 +12,7 @@ Item {
     id: reader
 
     property bool active: false
-    property var story: null       // {id, title, level, tokens: [[es, [en...]]]}
+    property var story: null       // {id, title, level, words, tokenCount}; the text comes from requestTokens
     property var progress: null    // {token, finished}
     property var settings: ({})
     property QtObject fonts
@@ -22,6 +22,10 @@ Item {
     signal markFinished
     signal resetProgress
     signal changeSetting(string key, var value)
+    // {seq, from} for the tokens from `from` on, {seq, before} for the ones
+    // before it, {seq, from, paragraph: true} for a jump; the reply goes to
+    // receiveTokens.
+    signal requestTokens(var request)
 
     // ---- settings
     readonly property int sizeIndex: Math.max(0, Math.min(Theme.textSizes.length - 1,
@@ -39,12 +43,32 @@ Item {
     // The glyph box (ascent + descent) is centred in each line, as in CSS.
     readonly property real textTop: (lineHeight - metrics.height) / 2
 
+    // ---- the text in memory
+    // Like a video player, the reader holds a window of the story: the
+    // tokens around the page on screen, fetched from the backend a chunk at a
+    // time ahead of the reader and dropped once far behind. A story that
+    // fits in the window is held whole, from its start.
+    readonly property int maxWindow: 6000     // tokens
+    readonly property int aheadTokens: 1500   // keep this much past the page on screen
+    property var tokens: []                   // tokens[0] is the story's token winStart
+    property int winStart: 0
+    readonly property int winEnd: winStart + tokens.length
+    readonly property int total: story ? story.tokenCount : 0
+    property bool indentFirst: false          // tokens[0] starts a paragraph
+    property var restarts: []                 // where text fetched backwards meets the rest: a new page
+    // Every page of the story is in the window, so page numbers are real.
+    readonly property bool whole: total > 0 && total <= maxWindow && winEnd === total
+    property int seq: 0
+    property bool waiting: false
+    property int pendingTurn: 0               // a page turn waiting for its text: +1 or -1
+    property bool saveAfterLoad: false
+
     // ---- state
     property var pages: []
     property int pageIndex: 0
     readonly property var page: pages.length ? pages[Math.min(pageIndex, pages.length - 1)]
-                                            : ({ pieces: [], segs: [], firstToken: 0, lastToken: 0 })
-    readonly property var tokens: story ? story.tokens : []
+                                            : ({ pieces: [], segs: [], firstToken: 0, lastToken: 0, startToken: 0, endToken: 0, wordsLeft: 0 })
+    readonly property bool atEnd: pages.length > 0 && winEnd >= total && pageIndex >= pages.length - 1
     property int selectedTok: -1
     property bool toolbarOpen: false
     property bool menuOpen: false
@@ -52,13 +76,20 @@ Item {
     property bool finished: progress ? progress.finished === true : false
 
     readonly property int percent: {
-        if (!pages.length || !tokens.length)
+        if (!pages.length || !total)
             return 0;
-        if (pageIndex >= pages.length - 1)
+        if (atEnd)
             return 100;
-        return Math.round(page.firstToken / tokens.length * 100);
+        return Math.round(page.startToken / total * 100);
     }
-    readonly property int minutesLeft: Math.ceil(Layout.wordsFrom(tokens, page.firstToken) / Theme.wordsPerMinute)
+    readonly property int minutesLeft: {
+        var words = whole ? page.wordsLeft : (story ? story.words * (total - page.startToken) / total : 0);
+        return Math.ceil(words / Theme.wordsPerMinute);
+    }
+
+    function token(i) {
+        return tokens[i - winStart];
+    }
 
     FontMetrics {
         id: metrics
@@ -71,39 +102,160 @@ Item {
         font.pixelSize: titleText.font.pixelSize
     }
 
+    // ---- loading
+    function fetch(request) {
+        seq++;
+        request.seq = seq;
+        waiting = true;
+        requestTokens(request);
+    }
+
+    // The tokens from the window's start (for a story held whole) or from the
+    // saved page on.
+    onStoryChanged: {
+        selectedTok = -1;
+        toolbarOpen = menuOpen = sheetOpen = false;
+        finished = progress ? progress.finished === true : false;
+        tokens = [];
+        restarts = [];
+        pages = [];
+        pageIndex = 0;
+        pendingTurn = 0;
+        saveAfterLoad = false;
+        waiting = false;
+        if (!story)
+            return;
+        var at = progress ? Math.max(0, Math.min(progress.token, total - 1)) : 0;
+        anchorToken = at;
+        winStart = total <= maxWindow ? 0 : at;
+        fetch({ from: winStart });
+    }
+
+    // A chunk from the backend: {seq, from, tokens, atParagraph}.
+    function receiveTokens(chunk) {
+        if (!story || chunk.seq !== seq)
+            return;
+        waiting = false;
+        var got = chunk.tokens;
+        if (!tokens.length) {
+            winStart = chunk.from;
+            indentFirst = chunk.atParagraph;
+            restarts = [];
+            tokens = got;
+        } else if (chunk.from === winEnd && got.length) {
+            tokens = tokens.concat(got);
+        }
+        if (total <= maxWindow && winEnd < total) {
+            fetch({ from: winEnd });  // a short story is laid out once, whole
+            return;
+        } else if (chunk.from + got.length === winStart && got.length) {
+            // Fetched backwards: the text that was the window's start keeps
+            // its pages, so it starts a new one.
+            var keepTo = Math.max(chunk.from + maxWindow, page.endToken + aheadTokens);
+            restarts = [winStart].concat(restarts).filter(function (r) { return r < keepTo; });
+            tokens = got.concat(tokens.slice(0, Math.max(0, keepTo - winStart)));
+            winStart = chunk.from;
+            indentFirst = chunk.atParagraph;
+        }
+        relayout();
+        dropBehind();
+        if (pendingTurn !== 0) {
+            var turn = pendingTurn;
+            pendingTurn = 0;
+            goTo(pageIndex + turn);
+        } else if (saveAfterLoad && pages.length) {
+            saveAfterLoad = false;
+            pageShown();
+        }
+        fill();
+    }
+
+    // Keeps the next chunk loaded, and the previous one when there's room.
+    function fill() {
+        if (waiting || !story || !pages.length)
+            return;
+        if (winEnd < total && (total <= maxWindow || winEnd - page.endToken < aheadTokens))
+            fetch({ from: winEnd });
+        else if (winStart > 0 && pageIndex < 3 && tokens.length + aheadTokens <= maxWindow)
+            fetch({ before: winStart });
+    }
+
+    // Past maxWindow, forgets the pages well behind the one on screen. The
+    // window then starts at a page that begins a token, where a layout from
+    // there makes the same pages.
+    function dropBehind() {
+        if (tokens.length <= maxWindow)
+            return;
+        var cut = -1;
+        for (var i = 0; i < pageIndex - 2; i++) {
+            if (pages[i].startClean && winEnd - pages[i].startToken <= maxWindow) {
+                cut = i;
+                break;
+            }
+        }
+        if (cut <= 0)
+            return;
+        var s = pages[cut].startToken;
+        indentFirst = Layout.isParagraphBreak(tokens[s - winStart - 1][0]);
+        restarts = restarts.filter(function (r) { return r > s; });
+        tokens = tokens.slice(s - winStart);
+        winStart = s;
+        pages = pages.slice(cut);
+        pageIndex -= cut;
+    }
+
+    // Starts afresh at token `at` (moved back to its paragraph's start).
+    function jumpTo(at, save) {
+        selectedTok = -1;
+        if (whole) {
+            goTo(Layout.pageForToken(pages, at));
+            return;
+        }
+        tokens = [];
+        restarts = [];
+        pages = [];
+        pageIndex = 0;
+        pendingTurn = 0;
+        anchorToken = at;
+        saveAfterLoad = save;
+        fetch({ from: at, paragraph: true });
+    }
+
     // ---- layout
     property int anchorToken: 0
     function scheduleLayout(token) {
         anchorToken = token;
-        Qt.callLater(relayout);
+        Qt.callLater(function () {
+            relayout();
+            fill();
+        });
     }
     function currentToken() {
-        return pages.length ? page.firstToken : (progress ? progress.token : 0);
+        return pages.length ? page.startToken : anchorToken;
     }
     function relayout() {
-        if (!active || !story) {
+        if (!active || !story || !tokens.length) {
             pages = [];
             return;
         }
+        if (pages.length)
+            anchorToken = page.startToken;
         titleText.forceLayout();
-        var p = Layout.paginate(story.tokens, function (t) { return metrics.advanceWidth(t); }, {
+        var p = Layout.paginate(tokens, function (t) { return metrics.advanceWidth(t); }, {
             width: textWidth,
             height: linesPerPage * lineHeight,
             lineHeight: lineHeight,
             spaceWidth: metrics.advanceWidth(" "),
             indent: Math.round(Theme.indentEm * fontSize),
-            firstPageTop: titleBlock.height
+            firstPageTop: winStart === 0 ? titleBlock.height : 0,
+            offset: winStart,
+            indentFirst: indentFirst,
+            restarts: restarts
         });
         pages = p;
         pageIndex = Layout.pageForToken(p, anchorToken);
     }
 
-    onStoryChanged: {
-        selectedTok = -1;
-        toolbarOpen = menuOpen = sheetOpen = false;
-        finished = progress ? progress.finished === true : false;
-        scheduleLayout(progress ? progress.token : 0);
-    }
     onActiveChanged: scheduleLayout(currentToken())
     onFontSizeChanged: scheduleLayout(currentToken())
     onFamilyChanged: scheduleLayout(currentToken())
@@ -111,15 +263,36 @@ Item {
     function goTo(index) {
         if (!pages.length)
             return;
-        index = Math.max(0, Math.min(pages.length - 1, index));
         selectedTok = -1;
+        // The window's last page may still be missing text, unless it's the story's.
+        var last = winEnd >= total ? pages.length - 1 : Math.max(0, pages.length - 2);
+        if (index > last) {
+            if (winEnd < total) {
+                pendingTurn = 1;
+                if (!waiting)
+                    fetch({ from: winEnd });
+            }
+            index = last;
+        } else if (index < 0) {
+            if (winStart > 0) {
+                pendingTurn = -1;
+                if (!waiting)
+                    fetch({ before: winStart });
+            }
+            index = 0;
+        }
         if (index === pageIndex)
             return;
         pageIndex = index;
-        var last = index === pages.length - 1;
-        if (last)
+        pageShown();
+        dropBehind();
+        fill();
+    }
+
+    function pageShown() {
+        if (atEnd)
             finished = true;
-        savePosition(pages[index].firstToken, last);
+        savePosition(page.startToken, atEnd);
     }
 
     function segAt(x, y) {
@@ -180,7 +353,7 @@ Item {
             objectName: "titleBlock"
             width: parent.width
             height: (Math.max(1, titleText.lineCount) + 1) * reader.lineHeight
-            visible: reader.pageIndex === 0
+            visible: reader.pageIndex === 0 && reader.winStart === 0
             Text {
                 id: titleText
                 y: (reader.lineHeight - titleMetrics.height) / 2
@@ -247,6 +420,7 @@ Item {
             objectName: "footerPage"
             height: parent.height
             verticalAlignment: Text.AlignVCenter
+            visible: reader.whole
             text: "Pág. " + (reader.pageIndex + 1) + " de " + reader.pages.length
             color: Theme.ink2
             font.family: reader.fonts.sansSemi
@@ -292,7 +466,7 @@ Item {
         objectName: "popover"
         visible: reader.selectedRect !== null
         anchorRect: reader.selectedRect || ({ x: 0, y: 0, width: 0, height: 0 })
-        translations: reader.selectedTok >= 0 && reader.tokens[reader.selectedTok] ? reader.tokens[reader.selectedTok][1] : []
+        translations: reader.selectedTok >= 0 && reader.token(reader.selectedTok) ? reader.token(reader.selectedTok)[1] : []
         fonts: reader.fonts
     }
 
@@ -328,11 +502,12 @@ Item {
             objectName: "bottomBar"
             y: parent.height - height
             pageIndex: reader.pageIndex
-            pageCount: Math.max(1, reader.pages.length)
+            pageCount: reader.whole ? Math.max(1, reader.pages.length) : 0
             minutesLeft: reader.minutesLeft
             percent: reader.percent
             fonts: reader.fonts
             onSeek: index => reader.goTo(index)
+            onSeekPercent: p => reader.jumpTo(Math.min(reader.total - 1, Math.round(p / 100 * reader.total)), true)
         }
         // Clicks between the menu and the bars close the menu.
         MouseArea {
@@ -354,15 +529,19 @@ Item {
             onTriggered: key => {
                 reader.menuOpen = reader.toolbarOpen = false;
                 if (key === "start") {
-                    reader.goTo(0);
+                    reader.jumpTo(0, true);
                 } else if (key === "read") {
                     reader.finished = true;
                     reader.markFinished();
                 } else if (key === "reset") {
-                    reader.selectedTok = -1;
-                    reader.pageIndex = 0;
                     reader.finished = false;
                     reader.resetProgress();
+                    if (reader.whole) {
+                        reader.selectedTok = -1;
+                        reader.pageIndex = 0;
+                    } else {
+                        reader.jumpTo(0, false);
+                    }
                 }
             }
         }

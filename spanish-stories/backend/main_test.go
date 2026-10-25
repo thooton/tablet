@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -92,6 +93,15 @@ func TestAppFlow(t *testing.T) {
 	r := app.handle(reqOpen, []byte(`{"id": "01-a"}`))
 	if len(r) != 1 || r[0].Type != respStory {
 		t.Fatalf("open failed: %+v", r)
+	}
+	opened, _ := json.Marshal(r[0].Body)
+	if !strings.Contains(string(opened), `"tokenCount":3`) || strings.Contains(string(opened), "uno") {
+		t.Fatalf("open sends the text: %s", opened)
+	}
+	r = app.handle(reqTokens, []byte(`{"id": "01-a", "seq": 4, "from": 1}`))
+	chunk, _ := json.Marshal(r[0].Body)
+	if r[0].Type != respTokens || string(chunk) != `{"atParagraph":false,"from":1,"id":"01-a","seq":4,"tokens":[["dos",["two"]],[".",[]]]}` {
+		t.Fatalf("tokens: %d %s", r[0].Type, chunk)
 	}
 	app.handle(reqProgress, []byte(`{"id": "01-a", "token": 2}`))
 	app.handle(reqLookup, []byte(`{"id": "01-a", "es": "Dos"}`))
@@ -198,5 +208,58 @@ func TestHeaderEncoding(t *testing.T) {
 	}
 	if _, _, err := decodeHeader(encodeHeader(1, maxMessageLength+1)); err == nil {
 		t.Fatal("oversized message accepted")
+	}
+}
+
+func TestTokenChunks(t *testing.T) {
+	var content []string
+	for i := 0; i < 5000; i++ {
+		if i%10 == 9 {
+			content = append(content, `["\n", ""]`)
+		} else {
+			content = append(content, fmt.Sprintf(`["p%d", "w%d"]`, i, i))
+		}
+	}
+	s, err := parseStory("b.json", []byte(`[`+strings.Join(content, ",")+`]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	type chunk struct {
+		From        int     `json:"from"`
+		Tokens      [][]any `json:"tokens"`
+		AtParagraph bool    `json:"atParagraph"`
+	}
+	get := func(from, before int, paragraph bool) chunk {
+		data, _ := json.Marshal(tokenChunk(s, from, before, paragraph))
+		if len(data) > maxChunkBytes+1024 {
+			t.Fatalf("chunk of %d bytes", len(data))
+		}
+		var c chunk
+		json.Unmarshal(data, &c)
+		return c
+	}
+	// Forward, chunk after chunk, gives back the whole text in order.
+	n := 0
+	for n < 5000 {
+		c := get(n, -1, false)
+		if c.From != n || len(c.Tokens) == 0 || len(c.Tokens) > maxChunkTokens || c.Tokens[0][0] != s.Tokens[n].Es {
+			t.Fatalf("chunk at %d: from %d, %d tokens", n, c.From, len(c.Tokens))
+		}
+		n += len(c.Tokens)
+	}
+	if n != 5000 || len(get(5000, -1, false).Tokens) != 0 {
+		t.Fatalf("read %d tokens", n)
+	}
+	if c := get(0, 3005, false); c.From != 3005-maxChunkTokens || len(c.Tokens) != maxChunkTokens || c.Tokens[len(c.Tokens)-1][0] != "p3004" {
+		t.Fatalf("before: from %d, %d tokens", c.From, len(c.Tokens))
+	}
+	if c := get(0, 40, false); c.From != 0 || len(c.Tokens) != 40 {
+		t.Fatalf("before near the start: from %d, %d tokens", c.From, len(c.Tokens))
+	}
+	if c := get(1234, -1, true); c.From != 1230 || !c.AtParagraph || c.Tokens[0][0] != "p1230" {
+		t.Fatalf("paragraph: from %d at %v", c.From, c.AtParagraph)
+	}
+	if c := get(1234, -1, false); c.From != 1234 || c.AtParagraph {
+		t.Fatalf("mid-paragraph: from %d at %v", c.From, c.AtParagraph)
 	}
 }

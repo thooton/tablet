@@ -3,6 +3,10 @@
 // Lays a story's (spanish, [english...]) tokens out into pages of positioned
 // text items. Pure JavaScript: text widths come from the `measure` callback,
 // so the same code runs in the app and in tests.
+//
+// A long story is read a window at a time (ReaderView.qml), so the tokens
+// given here may start anywhere in it: opts.offset is the story's index of
+// tokens[0], and every token index this returns is the story's.
 
 // Punctuation that hugs the word before it / the word after it.
 var CLOSERS = ".,;:!?)]}»”’…%";
@@ -26,7 +30,10 @@ function isParagraphBreak(text) {
 
 // Splits tokens into paragraphs of unbreakable clusters of pieces.
 // A piece is one space-free fragment of a token's Spanish text.
-function buildParagraphs(tokens) {
+// restarts: local token indices where a fresh page starts, mid-paragraph
+// or not (the window was extended backwards to there).
+// Returns [{ clusters, indent, restart }].
+function buildParagraphs(tokens, indentFirst, restarts) {
     var paragraphs = [];
     var clusters = [];
     var cluster = null;
@@ -38,10 +45,16 @@ function buildParagraphs(tokens) {
     var asideOpen = false;
     var prevWord = false;
     var prevText = "";
+    var next = { indent: indentFirst, restart: false };
+    var restartAt = {};
+    for (var r = 0; r < restarts.length; r++) restartAt[restarts[r]] = true;
 
     function flushParagraph() {
         if (cluster) clusters.push(cluster);
-        if (clusters.length) paragraphs.push(clusters);
+        if (clusters.length) {
+            paragraphs.push({ clusters: clusters, indent: next.indent, restart: next.restart });
+            next = { indent: true, restart: false };
+        }
         clusters = [];
         cluster = null;
         glueNext = true;
@@ -53,12 +66,17 @@ function buildParagraphs(tokens) {
     for (var i = 0; i < tokens.length; i++) {
         var es = tokens[i][0];
         var en = tokens[i][1] || [];
+        if (restartAt[i]) {
+            var midParagraph = clusters.length > 0 || cluster !== null;
+            flushParagraph();
+            next = { indent: !midParagraph && i > 0 && isParagraphBreak(tokens[i - 1][0]), restart: true };
+        }
         if (isParagraphBreak(es)) {
             flushParagraph();
             continue;
         }
         var link = en.length > 0;
-        var words = es.split(/\s+/).filter(function (w) { return w.length > 0; });
+        var words = /\s/.test(es) ? es.split(/\s+/).filter(function (w) { return w.length > 0; }) : [es];
         var closingDash = false;
         var closesAfter = false; // "!—" in "—¡y bien vengado!— del..."
         if (!link && es.charAt(0) === "—" && cluster) {
@@ -71,7 +89,8 @@ function buildParagraphs(tokens) {
         for (var w = 0; w < words.length; w++) {
             var text = words[w];
             var glued = w === 0 ? (glueNext || noSpaceBefore(text) || closingDash) : false;
-            var piece = { text: text, tok: link ? i : -1, punct: !link };
+            // src: the token it comes from; first: it begins that token.
+            var piece = { text: text, tok: link ? i : -1, punct: !link, src: i, first: w === 0 };
             if (glued && cluster) {
                 cluster.pieces.push(piece);
             } else {
@@ -90,16 +109,28 @@ function buildParagraphs(tokens) {
     return paragraphs;
 }
 
+var cachedTokens = null;
+var cachedKey = "";
+var cachedParagraphs = null;
+
 // opts: width, height, lineHeight, spaceWidth,
 //       indent (first line of every paragraph but the story's first),
-//       firstPageTop (space reserved on page one for the title).
+//       firstPageTop (space reserved on page one for the title),
+//       offset (story index of tokens[0]), indentFirst (tokens[0] starts a
+//       paragraph that isn't the story's first), restarts (story indices
+//       where a page must start afresh).
 // Lines are justified like a book: every line but a paragraph's last is
 // stretched to the full width by widening the spaces between words.
-// Returns [{ pieces, segs, firstToken, lastToken }]:
+// Returns [{ pieces, segs, firstToken, lastToken, startToken, endToken, startClean, wordsLeft }]:
 //   pieces: [{x, y, w, text, tok, punct}]  one per word or punctuation mark
 //   segs:   [{x, y, w, tok}]  a phrase's run of words on one line, spaces
 //           included; this is what gets the dotted underline and the tap target.
+//   firstToken, lastToken: the first and last tappable token on the page.
+//   startToken, endToken: the first and last token with anything on the page;
+//           startClean: the page begins with the start of startToken.
+//   wordsLeft: Spanish words from this page to the end of tokens.
 function paginate(tokens, measure, opts) {
+    var off = opts.offset || 0;
     var widthCache = {};
     function widthOf(text) {
         if (!(text in widthCache)) widthCache[text] = measure(text);
@@ -111,14 +142,49 @@ function paginate(tokens, measure, opts) {
         return w;
     }
 
-    var paragraphs = buildParagraphs(tokens);
+    // A cluster wider than a line ("INSULTE-A-ALBUS-DUMBLEDORE-EN-MI-PRESENCIA")
+    // wraps after its hyphens, like a book.
+    function breakAtHyphens(cl) {
+        var parts = [];
+        var part = null;
+        for (var k = 0; k < cl.pieces.length; k++) {
+            var piece = cl.pieces[k];
+            var bits = piece.text.match(/[^-]+-+|[^-]+$|-+/g) || [piece.text];
+            for (var b = 0; b < bits.length; b++) {
+                var bit = { text: bits[b], tok: piece.tok, punct: piece.punct, src: piece.src, first: piece.first && b === 0 };
+                if (part && b > 0) {
+                    parts.push(part);
+                    part = null;
+                }
+                if (!part) part = { pieces: [], spaced: parts.length ? false : cl.spaced };
+                part.pieces.push(bit);
+            }
+        }
+        if (part) parts.push(part);
+        return parts;
+    }
+
+    // Splitting doesn't change with the font, so a relayout skips it.
+    var restarts = [];
+    for (var r = 0; r < (opts.restarts || []).length; r++) {
+        var local = opts.restarts[r] - off;
+        if (local > 0 && local < tokens.length) restarts.push(local);
+    }
+    var key = off + "|" + (opts.indentFirst ? 1 : 0) + "|" + restarts.join(",");
+    if (tokens !== cachedTokens || key !== cachedKey) {
+        cachedParagraphs = buildParagraphs(tokens, !!opts.indentFirst, restarts);
+        cachedTokens = tokens;
+        cachedKey = key;
+    }
+    var paragraphs = cachedParagraphs;
     var pages = [];
     var page = null;
     var y = 0;
     var lh = opts.lineHeight;
 
     function newPage() {
-        page = { pieces: [], segs: [], firstToken: -1, lastToken: -1 };
+        page = { pieces: [], segs: [], firstToken: -1, lastToken: -1, startToken: -1, endToken: -1,
+                 startClean: true, wordsLeft: 0 };
         pages.push(page);
         y = pages.length === 1 ? (opts.firstPageTop || 0) : 0;
     }
@@ -136,16 +202,23 @@ function paginate(tokens, measure, opts) {
             for (var k = 0; k < e.cl.pieces.length; k++) {
                 var piece = e.cl.pieces[k];
                 var w = widthOf(piece.text);
-                page.pieces.push({ x: x, y: y, w: w, text: piece.text, tok: piece.tok, punct: piece.punct });
-                if (piece.tok >= 0 && !piece.punct) {
-                    if (seg && seg.tok === piece.tok) {
+                var tok = piece.tok >= 0 ? piece.tok + off : -1;
+                if (page.startToken < 0) {
+                    page.startToken = piece.src + off;
+                    page.startClean = piece.first;
+                }
+                page.endToken = piece.src + off;
+                page.pieces.push({ x: x, y: y, w: w, text: piece.text, tok: tok, punct: piece.punct });
+                if (tok >= 0 && !piece.punct) {
+                    page.wordsLeft++;
+                    if (seg && seg.tok === tok) {
                         seg.w = x + w - seg.x;
                     } else {
-                        seg = { x: x, y: y, w: w, tok: piece.tok };
+                        seg = { x: x, y: y, w: w, tok: tok };
                         page.segs.push(seg);
                     }
-                    if (page.firstToken < 0) page.firstToken = piece.tok;
-                    page.lastToken = piece.tok;
+                    if (page.firstToken < 0) page.firstToken = tok;
+                    page.lastToken = tok;
                 } else {
                     seg = null;
                 }
@@ -157,8 +230,15 @@ function paginate(tokens, measure, opts) {
 
     newPage();
     for (var p = 0; p < paragraphs.length; p++) {
-        var clusters = paragraphs[p];
-        var start = p > 0 ? (opts.indent || 0) : 0;
+        var para = paragraphs[p];
+        if (para.restart && page.pieces.length) newPage();
+        var clusters = [];
+        for (var c0 = 0; c0 < para.clusters.length; c0++) {
+            var cl0 = para.clusters[c0];
+            if (clusterWidth(cl0) > opts.width) clusters = clusters.concat(breakAtHyphens(cl0));
+            else clusters.push(cl0);
+        }
+        var start = para.indent ? (opts.indent || 0) : 0;
         var line = { start: start, end: start, entries: [] };
         for (var c = 0; c < clusters.length; c++) {
             var cl = clusters[c];
@@ -175,19 +255,25 @@ function paginate(tokens, measure, opts) {
         if (line.entries.length) placeLine(line, true);
     }
 
+    for (var j = pages.length - 2; j >= 0; j--) pages[j].wordsLeft += pages[j + 1].wordsLeft;
+
     // Pages that hold only punctuation still need a token for progress.
     for (var i = 0; i < pages.length; i++) {
         if (pages[i].firstToken < 0) {
-            pages[i].firstToken = i > 0 ? pages[i - 1].lastToken : 0;
+            pages[i].firstToken = i > 0 ? pages[i - 1].lastToken : off;
             pages[i].lastToken = pages[i].firstToken;
+        }
+        if (pages[i].startToken < 0) {
+            pages[i].startToken = pages[i].endToken = i > 0 ? pages[i - 1].endToken : off;
         }
     }
     return pages;
 }
 
+// The page showing token `token` (the last one starting at or before it).
 function pageForToken(pages, token) {
     for (var i = pages.length - 1; i >= 0; i--) {
-        if (pages[i].firstToken <= token) return i;
+        if (pages[i].startToken <= token) return i;
     }
     return 0;
 }
@@ -208,14 +294,4 @@ function hitTest(segs, px, py, lineHeight, slack) {
         }
     }
     return best;
-}
-
-// Number of Spanish words in tokens[from..], for the time-left estimate.
-function wordsFrom(tokens, from) {
-    var n = 0;
-    for (var i = Math.max(0, from); i < tokens.length; i++) {
-        var en = tokens[i][1];
-        if (en && en.length) n += tokens[i][0].split(/\s+/).filter(function (w) { return w.length > 0; }).length;
-    }
-    return n;
 }

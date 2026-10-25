@@ -85,9 +85,12 @@ func main() {
 				logf("cannot encode reply: %v", err)
 				continue
 			}
+			// Never exit here: a backend that quits while its app is
+			// open crashes the tablet's UI. A broken connection ends the
+			// loop at the next recv.
 			if err := conn.send(r.Type, data); err != nil {
-				logf("cannot send reply: %v", err)
-				return
+				logf("cannot send reply %d (%d bytes): %v", r.Type, len(data), err)
+				break
 			}
 		}
 		if msgType == msgSystemTerminate {

@@ -168,8 +168,15 @@ class Driver:
     def page_index(self):
         return self.prop(self.reader(), "pageIndex")
 
+    def window(self):
+        """(story index of the first token held, the tokens held)"""
+        r = self.reader()
+        return self.prop(r, "winStart"), self.prop(r, "tokens")
+
     def tokens(self):
-        return self.prop(self.app, "story")["tokens"]
+        """The tokens held, by story index."""
+        start, toks = self.window()
+        return {start + i: t for i, t in enumerate(toks)}
 
     def tap_seg(self, seg):
         area = self.find("textArea")
@@ -244,24 +251,25 @@ def check_pages(d: Driver, label):
                 if a["x"] + a["w"] > b["x"] + 0.5:
                     raise Failed(f"{label}, page {i + 1}: {a['text']!r} overlaps {b['text']!r}")
         # A line followed by an unindented line is mid-paragraph: it must be
-        # justified to the right margin.
+        # justified to the right margin, if it has a space to stretch.
         ys = sorted(rows)
         for y, next_y in zip(ys, ys[1:]):
             if min(it["x"] for it in rows[next_y]) < 1:
                 end = max(it["x"] + it["w"] for it in rows[y])
-                if abs(end - aw) > 1 and len(rows[y]) > 1:
+                spaced = any(b["x"] - (a["x"] + a["w"]) > 0.5 for a, b in zip(rows[y], rows[y][1:]))
+                if abs(end - aw) > 1 and spaced:
                     ragged.append(" ".join(it["text"] for it in rows[y]))
         for s in p["segs"]:
             if not any(abs(s["y"] - y) < 0.5 for y in rows):
                 raise Failed(f"{label}, page {i + 1}: a dotted segment has no text")
     title_bottom = d.find("titleBlock").property("height")
-    if pages and pages[0]["pieces"] and min(it["y"] for it in pages[0]["pieces"]) < title_bottom:
+    if d.window()[0] == 0 and pages and pages[0]["pieces"] and min(it["y"] for it in pages[0]["pieces"]) < title_bottom:
         raise Failed(f"{label}: text starts under the title")
     if ragged:
         raise Failed(f"{label}: lines not justified: {ragged[:3]}")
     tokens = d.tokens()
     seen = sorted({s["tok"] for p in pages for s in p["segs"]})
-    wanted = [i for i, t in enumerate(tokens) if t[1]]
+    wanted = [i for i, t in sorted(tokens.items()) if t[1]]
     if seen != wanted:
         raise Failed(f"{label}: {len(set(wanted) - set(seen))} translatable tokens are not tappable")
     d.check(True, f"{label}: {len(pages)} pages, {len(wanted)} tappable phrases, justified, inside the page")
@@ -293,6 +301,95 @@ def check_all_stories(d: Driver):
         d.wait_until("default size", lambda: d.prop(reader, "fontSize") == 40)
         QMetaObject.invokeMethod(app, "showLibrary")
         d.wait_until("the library", lambda: d.prop(app, "view") == "library")
+
+
+MAX_WINDOW = 6000
+
+
+def check_streaming(d: Driver, book):
+    """A book is read through a window of its text: page after page with
+    nothing missing, a bounded window, backwards, jumps, and resuming."""
+    from PySide6.QtCore import QMetaObject, Q_ARG
+    app, reader = d.app, d.reader()
+    d.tap_story(book["id"])
+    d.check(d.prop(reader, "winStart") == 0 and d.find("titleBlock").isVisible(), "opens on the first page, with the title")
+    d.check(not d.prop(reader, "whole"), f"holds {len(d.window()[1])} of its {book['tokens']} tokens")
+    d.tap_at(SCREEN_W / 2, SCREEN_H - 60)
+    d.check(not d.visible("footerPage") and d.prop(reader, "percent") == 0, "no page numbers, just the percent")
+    d.tap_at(SCREEN_W / 2, SCREEN_H - 60)
+
+    def turn(step):
+        before = d.page()["startToken"]
+        d.tap_at(SCREEN_W - 40 if step > 0 else 40, 900)
+        d.wait_until("the page to turn", lambda: (d.page()["startToken"] - before) * step > 0)
+        return d.page()
+
+    def follows(a, b):
+        # b starts where a ends: the same token (a phrase split across the
+        # pages), the next one, or after a paragraph break.
+        gap = b["startToken"] - a["endToken"]
+        return 0 <= gap <= 1 or (gap == 2 and d.tokens().get(a["endToken"] + 1, ["\n"])[0] == "\n")
+
+    seen = [d.page()]
+    biggest = 0
+    for _ in range(60):
+        seen.append(turn(+1))
+        biggest = max(biggest, len(d.window()[1]))
+    d.check(all(follows(a, b) for a, b in zip(seen, seen[1:])), "60 pages forward, each starting where the last ended")
+    d.check(biggest <= MAX_WINDOW + 1500 and d.prop(reader, "winStart") > 0,
+            f"pages behind are dropped (at most {biggest} tokens held)")
+    back = [turn(-1)["startToken"] for _ in range(5)]
+    d.check(back == [p["startToken"] for p in seen[-2:-7:-1]], "5 pages back are the same pages")
+    d.wait_until("position saved", lambda: d.state()["stories"][book["id"]]["token"] == d.page()["startToken"])
+    d.check(True, "reading position saved")
+
+    segs = d.page()["segs"]
+    tok = segs[len(segs) // 2]
+    d.tap_seg(tok)
+    d.check(d.translations() == d.tokens()[tok["tok"]][1], "a word deep in the book shows its translation")
+    d.tap_seg(tok)
+
+    d.open_toolbar()
+    d.check(d.find("toolbarPage").property("text") == f"{d.prop(reader, 'percent')}%", "the toolbar shows the percent")
+    slider = d.find("slider")
+    a = d.scene_point(slider, slider.property("width") * d.prop(reader, "percent") / 100, 30)
+    b = d.scene_point(slider, slider.property("width") * 0.5, 30)
+    d.drag(a.x(), a.y(), b.x(), b.y())
+    d.wait_until("the jump", lambda: abs(d.prop(reader, "percent") - 50) <= 1 and d.pages())
+    d.check(True, f"the slider jumps to the middle ({d.prop(reader, 'percent')}%)")
+    d.check(d.window()[0] > book["tokens"] // 3, "holding only the text around it")
+    d.shot("reader-book-middle")
+    d.tap_at(SCREEN_W / 2, 900)
+    d.check(not d.visible("toolbar"), "tapping the page hides the toolbar")
+
+    # Back past the start of the window: the text before it is fetched.
+    start = d.prop(reader, "winStart")
+    here = d.page()
+    after = here
+    while here["startToken"] >= start:
+        here, after = turn(-1), here
+    d.check(after["startToken"] == start and follows(here, after),
+            "reading back past where it jumped to fetches the text before, without a gap"
+            + ("" if after["startToken"] == start and follows(here, after) else
+               f": window was from {start}, now {d.window()[0]}; page {here['startToken']}-{here['endToken']}"
+               f" then {after['startToken']}-{after['endToken']}"))
+
+    QMetaObject.invokeMethod(app, "showLibrary")
+    d.wait_until("the library", lambda: d.prop(app, "view") == "library")
+    d.tap_story(book["id"])
+    d.check(d.page()["startToken"] == here["startToken"], "reopening it shows the same page")
+
+    QMetaObject.invokeMethod(reader, "jumpTo", Q_ARG("QVariant", book["tokens"] - 300), Q_ARG("QVariant", True))
+    d.wait_until("near the end", lambda: d.prop(reader, "percent") >= 99 and d.pages())
+    for _ in range(40):
+        if d.prop(reader, "atEnd"):
+            break
+        turn(+1)
+    d.check(d.prop(reader, "atEnd") and d.prop(reader, "percent") == 100, "reaches the last page")
+    d.wait_until("finished flag", lambda: d.state()["stories"][book["id"]]["finished"])
+    d.check(True, "which marks the book read")
+    QMetaObject.invokeMethod(app, "showLibrary")
+    d.wait_until("the library", lambda: d.prop(app, "view") == "library")
 
 
 def run(d: Driver):
@@ -333,7 +430,8 @@ def run(d: Driver):
     d.tap("menu_reload")
     d.check(not d.visible("libraryMenu"), "Recargar cuentos closes the menu")
 
-    big = max(stories, key=lambda s: s["tokens"])
+    # The longest story still laid out whole, with page numbers.
+    big = max((s for s in stories if s["tokens"] <= MAX_WINDOW), key=lambda s: s["tokens"])
     print(f"read {big['title']!r}")
     d.tap_story(big["id"])
     reader = d.reader()
@@ -505,6 +603,11 @@ def run(d: Driver):
             "with every progress dot filled")
     d.wait(200)
     d.shot("library-after")
+
+    book = max(stories, key=lambda s: s["tokens"])
+    if book["tokens"] > MAX_WINDOW:
+        print(f"stream {book['title']!r}")
+        check_streaming(d, book)
 
     print("every story, smallest and largest text, every font")
     check_all_stories(d)

@@ -47,6 +47,23 @@ def main():
         body = conn.recv(max(length, 1)) if length else b""
         return msg_type, json.loads(body)
 
+    def open_story(story_id):
+        # A 102 with the story but not its text, which the frontend then
+        # fetches a chunk at a time (7 -> 103), each small enough to be one packet.
+        send(2, json.dumps({"id": story_id}))
+        t, opened = recv()
+        if t != 102:
+            return t, opened
+        tokens = []
+        while len(tokens) < opened["story"]["tokenCount"]:
+            send(7, json.dumps({"id": story_id, "seq": len(tokens), "from": len(tokens)}))
+            t, chunk = recv()
+            if t != 103 or chunk["from"] != len(tokens) or chunk["seq"] != len(tokens) or not chunk["tokens"]:
+                return t, chunk
+            tokens += chunk["tokens"]
+        opened["story"]["tokens"] = tokens
+        return 102, opened
+
     passed = 0
 
     def check(cond, msg):
@@ -64,14 +81,12 @@ def main():
     check(len(lib["stories"]) >= 9 and not lib["errors"], f"{len(lib['stories'])} stories, no errors")
     first = lib["stories"][0]
 
-    send(2, json.dumps({"id": first["id"]}))
-    t, opened = recv()
+    t, opened = open_story(first["id"])
     check(t == 102 and opened["story"]["tokens"], f"opens {first['title']!r} ({len(opened['story']['tokens'])} tokens)")
     big = max(lib["stories"], key=lambda s: s["tokens"])
-    send(2, json.dumps({"id": big["id"]}))
-    t, opened = recv()
+    t, opened = open_story(big["id"])
     check(t == 102 and len(opened["story"]["tokens"]) == big["tokens"],
-          f"largest story ({big['tokens']} tokens) arrives whole in one message")
+          f"largest story ({big['tokens']} tokens) arrives whole, in packets that fit")
 
     send(3, json.dumps({"id": first["id"], "token": 40, "finished": False}))
     send(1, "{}")
