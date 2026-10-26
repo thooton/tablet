@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -216,25 +217,63 @@ func prettifyName(base string) string {
 	return string(r)
 }
 
+// storyCache keeps each file's parsed story until the file changes: the
+// library is read again every time it is shown, and parsing a novel took
+// seconds on the tablet.
+type storyCache map[string]cachedStory
+
+type cachedStory struct {
+	size    int64
+	modTime time.Time
+	story   *Story
+	err     error
+}
+
+func (c storyCache) parse(file string) (*Story, error) {
+	info, err := os.Stat(file)
+	if err != nil {
+		return nil, err
+	}
+	if hit, ok := c[file]; ok && hit.size == info.Size() && hit.modTime.Equal(info.ModTime()) {
+		if hit.err != nil {
+			return nil, hit.err
+		}
+		story := *hit.story // the ID may be changed below; the tokens are shared
+		return &story, nil
+	}
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	story, err := parseStory(file, data)
+	c[file] = cachedStory{size: info.Size(), modTime: info.ModTime(), story: story, err: err}
+	if err != nil {
+		return nil, err
+	}
+	copied := *story
+	return &copied, nil
+}
+
 // loadStories reads every *.json story in the given directories (missing
 // directories are skipped). Files that fail to parse are reported, not fatal.
-func loadStories(dirs []string) ([]*Story, []StoryError) {
+// cache may be nil.
+func loadStories(dirs []string, cache storyCache) ([]*Story, []StoryError) {
+	if cache == nil {
+		cache = storyCache{}
+	}
 	var stories []*Story
 	var problems []StoryError
 	seen := map[string]bool{}
+	files := map[string]bool{}
 	for _, dir := range dirs {
-		files, err := filepath.Glob(filepath.Join(dir, "*.json"))
+		matches, err := filepath.Glob(filepath.Join(dir, "*.json"))
 		if err != nil {
 			continue
 		}
-		sort.Strings(files)
-		for _, file := range files {
-			data, err := os.ReadFile(file)
-			if err != nil {
-				problems = append(problems, StoryError{File: filepath.Base(file), Error: err.Error()})
-				continue
-			}
-			story, err := parseStory(file, data)
+		sort.Strings(matches)
+		for _, file := range matches {
+			files[file] = true
+			story, err := cache.parse(file)
 			if err != nil {
 				problems = append(problems, StoryError{File: filepath.Base(file), Error: err.Error()})
 				continue
@@ -245,6 +284,11 @@ func loadStories(dirs []string) ([]*Story, []StoryError) {
 			}
 			seen[story.ID] = true
 			stories = append(stories, story)
+		}
+	}
+	for file := range cache {
+		if !files[file] {
+			delete(cache, file)
 		}
 	}
 	return stories, problems

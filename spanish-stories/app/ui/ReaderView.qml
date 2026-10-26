@@ -67,7 +67,7 @@ Item {
     property var pages: []
     property int pageIndex: 0
     readonly property var page: pages.length ? pages[Math.min(pageIndex, pages.length - 1)]
-                                            : ({ pieces: [], segs: [], firstToken: 0, lastToken: 0, startToken: 0, endToken: 0, wordsLeft: 0 })
+                                            : ({ lines: [], pieces: [], segs: [], firstToken: 0, lastToken: 0, startToken: 0, endToken: 0, wordsLeft: 0 })
     readonly property bool atEnd: pages.length > 0 && winEnd >= total && pageIndex >= pages.length - 1
     property int selectedTok: -1
     property bool toolbarOpen: false
@@ -125,9 +125,12 @@ Item {
         waiting = false;
         if (!story)
             return;
-        var at = progress ? Math.max(0, Math.min(progress.token, total - 1)) : 0;
+        // Not `total`: its binding may not have caught up with the new story
+        // yet, and a stale 0 put every story back at its start.
+        var count = story.tokenCount;
+        var at = progress ? Math.max(0, Math.min(progress.token, count - 1)) : 0;
         anchorToken = at;
-        winStart = total <= maxWindow ? 0 : at;
+        winStart = count <= maxWindow ? 0 : at;
         fetch({ from: winStart });
     }
 
@@ -137,6 +140,7 @@ Item {
             return;
         waiting = false;
         var got = chunk.tokens;
+        var appended = false;
         if (!tokens.length) {
             winStart = chunk.from;
             indentFirst = chunk.atParagraph;
@@ -144,6 +148,7 @@ Item {
             tokens = got;
         } else if (chunk.from === winEnd && got.length) {
             tokens = tokens.concat(got);
+            appended = true;
         }
         if (total <= maxWindow && winEnd < total) {
             fetch({ from: winEnd });  // a short story is laid out once, whole
@@ -157,7 +162,10 @@ Item {
             winStart = chunk.from;
             indentFirst = chunk.atParagraph;
         }
-        relayout();
+        if (appended && pages.length)
+            extendLayout();
+        else
+            relayout();
         dropBehind();
         if (pendingTurn !== 0) {
             var turn = pendingTurn;
@@ -241,20 +249,58 @@ Item {
         if (pages.length)
             anchorToken = page.startToken;
         titleText.forceLayout();
-        var p = Layout.paginate(tokens, function (t) { return metrics.advanceWidth(t); }, {
+        setPages(paginate(tokens, winStart, indentFirst, winStart === 0 ? titleBlock.height : 0));
+    }
+    // After text arrives at the window's end only its last pages can change,
+    // so the layout starts again from the last page but one (if it begins a
+    // token: then a layout from there makes the same pages, as in
+    // dropBehind) rather than from the window's start: laying out the whole
+    // window took seconds on the tablet, every few pages.
+    function extendLayout() {
+        if (!active) {
+            relayout();
+            return;
+        }
+        var k = pages.length - 2;
+        while (k > 0 && !pages[k].startClean)
+            k--;
+        if (k <= 0) {
+            relayout();
+            return;
+        }
+        anchorToken = page.startToken;
+        var s = pages[k].startToken;
+        var tail = paginate(tokens.slice(s - winStart), s, Layout.isParagraphBreak(token(s - 1)[0]), 0);
+        setPages(pages.slice(0, k).concat(tail));
+    }
+    function paginate(toks, offset, indentFirst, firstPageTop) {
+        return Layout.paginate(toks, function (t) { return metrics.advanceWidth(t); }, {
+            fontKey: family + "|" + fontSize,
             width: textWidth,
             height: linesPerPage * lineHeight,
             lineHeight: lineHeight,
             spaceWidth: metrics.advanceWidth(" "),
             indent: Math.round(Theme.indentEm * fontSize),
-            firstPageTop: winStart === 0 ? titleBlock.height : 0,
-            offset: winStart,
+            firstPageTop: firstPageTop,
+            offset: offset,
             indentFirst: indentFirst,
             restarts: restarts
         });
+    }
+    function setPages(p) {
+        var most = dotSlots;
+        for (var i = 0; i < p.length; i++)
+            most = Math.max(most, p[i].segs.length);
+        dotSlots = most;
         pages = p;
         pageIndex = Layout.pageForToken(p, anchorToken);
     }
+    // The page's items are made once and reused, page after page: making
+    // hundreds of them on every turn was most of a page turn's time on the
+    // tablet. Lines are one text each; the dots are one image per phrase.
+    property int dotSlots: 0
+    readonly property var selectedSegs: page.segs.filter(function (s) { return s.tok === selectedTok; })
+    readonly property var selectedPieces: page.pieces.filter(function (p) { return !p.punct && p.tok === selectedTok; })
 
     onActiveChanged: scheduleLayout(currentToken())
     onFontSizeChanged: scheduleLayout(currentToken())
@@ -369,40 +415,57 @@ Item {
             }
         }
 
-        // Highlight and dotted underline, one per phrase segment.
         Repeater {
-            model: reader.page.segs
-            delegate: Item {
-                readonly property bool selected: modelData.tok === reader.selectedTok
-                Rectangle {
-                    visible: parent.selected
-                    x: modelData.x - 6
-                    y: modelData.y + reader.textTop - 2
-                    width: modelData.w + 12
-                    height: metrics.height + 10
-                    color: Theme.ink
-                }
-                Image {
-                    visible: reader.showDots && !parent.selected
-                    // Whole dots only: the tile is 10 px with its dot in the middle.
-                    x: modelData.x
-                    y: modelData.y + reader.textTop + metrics.height + 3
-                    width: Math.max(1, Math.round(modelData.w / 10)) * 10 - 2
-                    height: 8
-                    source: "images/dots.png"
-                    fillMode: Image.TileHorizontally
-                    horizontalAlignment: Image.AlignLeft
-                }
+            model: reader.dotSlots
+            delegate: Image {
+                readonly property var seg: index < reader.page.segs.length ? reader.page.segs[index] : null
+                visible: seg !== null && reader.showDots && seg.tok !== reader.selectedTok
+                // Whole dots only: the tile is 10 px with its dot in the middle.
+                x: seg ? seg.x : 0
+                y: (seg ? seg.y : 0) + reader.textTop + metrics.height + 3
+                width: seg ? Math.max(1, Math.round(seg.w / 10)) * 10 - 2 : 0
+                height: 8
+                source: "images/dots.png"
+                fillMode: Image.TileHorizontally
+                horizontalAlignment: Image.AlignLeft
             }
         }
 
         Repeater {
-            model: reader.page.pieces
+            model: reader.linesPerPage
+            delegate: Text {
+                readonly property var line: index < reader.page.lines.length ? reader.page.lines[index] : null
+                visible: line !== null
+                x: line ? line.x : 0
+                y: (line ? line.y : 0) + reader.textTop
+                text: line ? line.text : ""
+                textFormat: Text.PlainText
+                color: Theme.ink
+                font.family: reader.family
+                font.pixelSize: reader.fontSize
+                font.wordSpacing: line ? line.spacing : 0
+            }
+        }
+
+        // The tapped phrase: white on black.
+        Repeater {
+            model: reader.selectedSegs
+            delegate: Rectangle {
+                x: modelData.x - 6
+                y: modelData.y + reader.textTop - 2
+                width: modelData.w + 12
+                height: metrics.height + 10
+                color: Theme.ink
+            }
+        }
+        Repeater {
+            model: reader.selectedPieces
             delegate: Text {
                 x: modelData.x
                 y: modelData.y + reader.textTop
                 text: modelData.text
-                color: !modelData.punct && modelData.tok === reader.selectedTok ? Theme.white : Theme.ink
+                textFormat: Text.PlainText
+                color: Theme.white
                 font.family: reader.family
                 font.pixelSize: reader.fontSize
             }

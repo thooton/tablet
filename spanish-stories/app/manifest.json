@@ -5,7 +5,7 @@
     "loadsBackend": true,
     "supportsScaling": false,
     "canHaveMultipleFrontends": false,
-    "version": "1.2.0",
+    "version": "1.2.1",
     "formerNames": [
         "Spanish Reader"
     ]

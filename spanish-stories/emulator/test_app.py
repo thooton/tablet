@@ -140,6 +140,16 @@ class Driver:
     def state(self):
         return json.loads((self.emu_data / "state.json").read_text(encoding="utf-8"))
 
+    def reopen_app(self):
+        """Closes the app and opens it again, as leaving it on the tablet
+        does: a new frontend, the same backend."""
+        loader = self.emu.host.findChild(QObject, "appLoader")
+        loader.setProperty("active", False)
+        self.wait(100)
+        self._app = None
+        loader.setProperty("active", True)
+        self.wait_until("the library", lambda: self.prop(self.app, "library") is not None)
+
     # -- library helpers -------------------------------------------------------
     def library(self):
         return self.find("library")
@@ -336,6 +346,10 @@ def check_streaming(d: Driver, book):
         seen.append(turn(+1))
         biggest = max(biggest, len(d.window()[1]))
     d.check(all(follows(a, b) for a, b in zip(seen, seen[1:])), "60 pages forward, each starting where the last ended")
+    shape = lambda: [(p["startToken"], p["lines"]) for p in d.pages()]
+    grown = shape()
+    QMetaObject.invokeMethod(reader, "relayout")
+    d.check(shape() == grown, f"pages laid out as the text came in match a layout of the whole window ({len(grown)} pages)")
     d.check(biggest <= MAX_WINDOW + 1500 and d.prop(reader, "winStart") > 0,
             f"pages behind are dropped (at most {biggest} tokens held)")
     back = [turn(-1)["startToken"] for _ in range(5)]
@@ -378,6 +392,10 @@ def check_streaming(d: Driver, book):
     d.wait_until("the library", lambda: d.prop(app, "view") == "library")
     d.tap_story(book["id"])
     d.check(d.page()["startToken"] == here["startToken"], "reopening it shows the same page")
+    d.reopen_app()
+    app, reader = d.app, d.reader()
+    d.tap_story(book["id"])
+    d.check(d.page()["startToken"] == here["startToken"], "and so does leaving the app and coming back")
 
     QMetaObject.invokeMethod(reader, "jumpTo", Q_ARG("QVariant", book["tokens"] - 300), Q_ARG("QVariant", True))
     d.wait_until("near the end", lambda: d.prop(reader, "percent") >= 99 and d.pages())
@@ -494,6 +512,10 @@ def run(d: Driver):
     d.swipe(-500)
     d.wait_until("progress to be saved", lambda: d.state()["stories"][big["id"]]["token"] > 0)
     d.check(True, "reading position saved by the backend")
+    d.reopen_app()
+    app, reader = d.app, d.reader()
+    d.tap_story(big["id"])
+    d.check(d.page_index() == 1, "leaving the app and coming back opens it on the same page")
 
     print("page number")
     d.tap_at(SCREEN_W / 2, SCREEN_H - 60)

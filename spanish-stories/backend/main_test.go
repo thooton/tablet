@@ -75,6 +75,32 @@ func writeStory(t *testing.T, dir, name, body string) {
 	}
 }
 
+func TestStoryCache(t *testing.T) {
+	dir := t.TempDir()
+	writeStory(t, dir, "01-a.json", `{"title": "A", "content": [["uno", "one"]]}`)
+	writeStory(t, dir, "02-a.json", `{"id": "01-a", "title": "B", "content": [["dos", "two"]]}`)
+	cache := storyCache{}
+	first, _ := loadStories([]string{dir}, cache)
+	again, _ := loadStories([]string{dir}, cache)
+	if len(again) != 2 || again[0].ID != "01-a" || again[1].ID != "01-a-2" {
+		t.Fatalf("ids from the cache: %+v", again)
+	}
+	if &first[0].Tokens[0] != &again[0].Tokens[0] {
+		t.Fatal("an unchanged file was parsed again")
+	}
+	// A changed file is read again, a deleted one forgotten.
+	writeStory(t, dir, "01-a.json", `{"title": "A2", "content": [["uno", "one"], ["tres", "three"]]}`)
+	later := time.Now().Add(time.Minute)
+	if err := os.Chtimes(filepath.Join(dir, "01-a.json"), later, later); err != nil {
+		t.Fatal(err)
+	}
+	os.Remove(filepath.Join(dir, "02-a.json"))
+	changed, _ := loadStories([]string{dir}, cache)
+	if len(changed) != 1 || changed[0].Title != "A2" || len(cache) != 1 {
+		t.Fatalf("after a change: %+v (%d cached)", changed, len(cache))
+	}
+}
+
 func TestAppFlow(t *testing.T) {
 	dir := t.TempDir()
 	writeStory(t, dir, "01-a.json", `{"title": "A", "content": [["uno", "one"], ["dos", "two"], [".", ""]]}`)

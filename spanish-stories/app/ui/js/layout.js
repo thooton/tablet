@@ -109,11 +109,15 @@ function buildParagraphs(tokens, indentFirst, restarts) {
     return paragraphs;
 }
 
+var widths = {};
+var widthsFont = null;
+
 var cachedTokens = null;
 var cachedKey = "";
 var cachedParagraphs = null;
 
-// opts: width, height, lineHeight, spaceWidth,
+// opts: width, height, lineHeight, spaceWidth, fontKey (font and size the
+//       widths from `measure` belong to),
 //       indent (first line of every paragraph but the story's first),
 //       firstPageTop (space reserved on page one for the title),
 //       offset (story index of tokens[0]), indentFirst (tokens[0] starts a
@@ -121,7 +125,9 @@ var cachedParagraphs = null;
 //       where a page must start afresh).
 // Lines are justified like a book: every line but a paragraph's last is
 // stretched to the full width by widening the spaces between words.
-// Returns [{ pieces, segs, firstToken, lastToken, startToken, endToken, startClean, wordsLeft }]:
+// Returns [{ lines, pieces, segs, firstToken, lastToken, startToken, endToken, startClean, wordsLeft }]:
+//   lines:  [{x, y, text, spacing}]  what is drawn: each line as one text,
+//           every space in it widened by `spacing` px
 //   pieces: [{x, y, w, text, tok, punct}]  one per word or punctuation mark
 //   segs:   [{x, y, w, tok}]  a phrase's run of words on one line, spaces
 //           included; this is what gets the dotted underline and the tap target.
@@ -131,15 +137,30 @@ var cachedParagraphs = null;
 //   wordsLeft: Spanish words from this page to the end of tokens.
 function paginate(tokens, measure, opts) {
     var off = opts.offset || 0;
-    var widthCache = {};
-    function widthOf(text) {
-        if (!(text in widthCache)) widthCache[text] = measure(text);
-        return widthCache[text];
+    // Widths are kept between layouts in the same font: a chunk of a book
+    // arriving relays out the window, mostly words already measured.
+    if (opts.fontKey !== widthsFont) {
+        widths = {};
+        widthsFont = opts.fontKey;
     }
-    function clusterWidth(cl) {
-        var w = 0;
-        for (var k = 0; k < cl.pieces.length; k++) w += widthOf(cl.pieces[k].text);
+    var widthCache = widths;
+    function widthOf(text) {
+        var w = widthCache[text];
+        if (w === undefined) w = widthCache[text] = measure(text);
         return w;
+    }
+    function clusterText(cl) {
+        var t = "";
+        for (var k = 0; k < cl.pieces.length; k++) t += cl.pieces[k].text;
+        return t;
+    }
+    // A cluster is drawn as one run of text, so it is measured as one.
+    function clusterWidth(cl) {
+        if (cl.width === undefined || cl.widthFont !== widthsFont) {
+            cl.width = widthOf(clusterText(cl));
+            cl.widthFont = widthsFont;
+        }
+        return cl.width;
     }
 
     // A cluster wider than a line ("INSULTE-A-ALBUS-DUMBLEDORE-EN-MI-PRESENCIA")
@@ -183,7 +204,7 @@ function paginate(tokens, measure, opts) {
     var lh = opts.lineHeight;
 
     function newPage() {
-        page = { pieces: [], segs: [], firstToken: -1, lastToken: -1, startToken: -1, endToken: -1,
+        page = { lines: [], pieces: [], segs: [], firstToken: -1, lastToken: -1, startToken: -1, endToken: -1,
                  startClean: true, wordsLeft: 0 };
         pages.push(page);
         y = pages.length === 1 ? (opts.firstPageTop || 0) : 0;
@@ -196,12 +217,22 @@ function paginate(tokens, measure, opts) {
         var stretch = (!last && gaps > 0) ? (opts.width - line.end) / gaps : 0;
         var x = line.start;
         var seg = null;
+        var text = "";
         for (i = 0; i < line.entries.length; i++) {
             var e = line.entries[i];
-            if (e.gap > 0) x += e.gap + stretch;
-            for (var k = 0; k < e.cl.pieces.length; k++) {
+            if (e.gap > 0) {
+                x += e.gap + stretch;
+                text += " ";
+            }
+            text += clusterText(e.cl);
+            // Pieces share out the cluster's width, which kerning between
+            // them makes a little different from the sum of theirs.
+            var sum = 0;
+            for (var k = 0; k < e.cl.pieces.length; k++) sum += widthOf(e.cl.pieces[k].text);
+            var scale = sum > 0 ? clusterWidth(e.cl) / sum : 1;
+            for (k = 0; k < e.cl.pieces.length; k++) {
                 var piece = e.cl.pieces[k];
-                var w = widthOf(piece.text);
+                var w = widthOf(piece.text) * scale;
                 var tok = piece.tok >= 0 ? piece.tok + off : -1;
                 if (page.startToken < 0) {
                     page.startToken = piece.src + off;
@@ -225,6 +256,9 @@ function paginate(tokens, measure, opts) {
                 x += w;
             }
         }
+        // The line is drawn as one text, its spaces widened by `spacing`
+        // (font.wordSpacing) to justify it.
+        page.lines.push({ x: line.start, y: y, text: text, spacing: stretch });
         y += lh;
     }
 

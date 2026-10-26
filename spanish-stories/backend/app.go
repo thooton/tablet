@@ -36,6 +36,7 @@ type App struct {
 	statePath string
 	state     *State
 	stories   map[string]*Story
+	parsed    storyCache
 	now       func() time.Time
 }
 
@@ -45,6 +46,7 @@ func newApp(storyDirs []string, statePath string) *App {
 		statePath: statePath,
 		state:     loadState(statePath),
 		stories:   map[string]*Story{},
+		parsed:    storyCache{},
 		now:       time.Now,
 	}
 }
@@ -65,7 +67,7 @@ type storySummary struct {
 }
 
 func (a *App) library() map[string]any {
-	stories, problems := loadStories(a.storyDirs)
+	stories, problems := loadStories(a.storyDirs, a.parsed)
 	a.stories = map[string]*Story{}
 	summaries := []storySummary{}
 	for _, s := range stories {

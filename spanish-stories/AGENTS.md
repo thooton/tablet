@@ -247,6 +247,15 @@ packet, which the kernel refuses past the socket's send buffer (about
 that fits in the window is held whole and has page numbers; a longer one
 (a novel) shows the percent read, and its slider jumps by percent. Reading
 backwards past where it was opened, or jumped to, starts a new page there.
+When a chunk arrives at the window's end, only the last pages are laid out
+again, from the last but one that begins a token.
+
+A page is drawn with items made once and reused on every turn: each line
+is one `Text` (its spaces widened with `font.wordSpacing` to justify it,
+which is why `layout.js` measures each run of glued pieces as one), and
+each phrase's dots one `Image`. Making an item per word on every turn took
+seconds on the tablet. The backend keeps parsed stories until their file
+changes, since the library is read again each time it is shown.
 
 Progress is saved to `/home/root/.local/share/spanish-reader/state.json`.
 
