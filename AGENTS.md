@@ -18,7 +18,8 @@ has its own `AGENTS.md`; read it before changing that app.
 - `updater/`: Updater, which installs and updates every app here from this
   repository's releases (AppLoad id `updater`).
 - `tools/`: what the apps share: `appbuild.py` (rcc, the Go backend for both
-  CPUs, the release archive) and `emulator.py` (runs any app on a computer).
+  CPUs, the release archive) and `emulator.py` (runs any app on a computer), and `make_icons.py`
+  (draws the Biblioteca, Flashcards and Updater icons).
 
 This is not the phone's Tablet app (`tablet/` in thooton/sonim), which
 browses the tablet's documents through the Delta command center. The tablet
