@@ -73,7 +73,7 @@ is no scrolling. IBM Plex Sans, as the Updater has it.
   `main.go`; `transport.go` and `lifecycle.go` are the Updater's.
 - `app/ui/`: `main.qml` (every screen), `components/` (`AnkiButton`,
   `Mark`), `js/theme.js`.
-- `package/`, `tools/build.py`, `tools/make_icon.py` (the icon; Pillow).
+- `package/`, `tools/build.py`, the icon comes from the repository's `tools/make_icons.py` (Pillow).
 
 ## Testing
 
