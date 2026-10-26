@@ -1,0 +1,14 @@
+<RCC>
+    <qresource>
+        <file>ui/main.qml</file>
+        <file>ui/components/qmldir</file>
+        <file>ui/components/AnkiButton.qml</file>
+        <file>ui/components/Mark.qml</file>
+        <file>ui/js/theme.js</file>
+        <file>ui/images/close.png</file>
+        <file>ui/fonts/IBMPlexSans-Regular.ttf</file>
+        <file>ui/fonts/IBMPlexSans-Medium.ttf</file>
+        <file>ui/fonts/IBMPlexSans-SemiBold.ttf</file>
+        <file>ui/fonts/IBMPlexSans-Bold.ttf</file>
+    </qresource>
+</RCC>

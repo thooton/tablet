@@ -11,6 +11,10 @@ has its own `AGENTS.md`; read it before changing that app.
 - `lsat-falcon/`: LSAT Falcon, the LSAT drilling web app (thooton's `demon`,
   not on GitHub) redrawn for e-ink, with its question deck in `deck/`
   (AppLoad id `lsat-falcon`).
+- `flashcards/`: Flashcards, Anki's desktop window in black and white,
+  studying the phone's decks, synced through the command center, which it
+  pairs with (AppLoad id `flashcards`). The one app here that talks to the
+  command center.
 - `updater/`: Updater, which installs and updates every app here from this
   repository's releases (AppLoad id `updater`).
 - `tools/`: what the apps share: `appbuild.py` (rcc, the Go backend for both
@@ -20,7 +24,8 @@ This is not the phone's Tablet app (`tablet/` in thooton/sonim), which
 browses the tablet's documents through the Delta command center. The tablet
 syncs its documents with rmfakecloud on the command center, but nothing here
 reaches the tablet over the network: apps get there only through the
-Updater, or by hand over SSH.
+Updater, or by hand over SSH. (Flashcards talks to the command center
+itself, with a token of its own it gets by pairing.)
 
 ## Every change to an app bumps its version
 

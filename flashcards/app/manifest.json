@@ -1,0 +1,9 @@
+{
+    "id": "flashcards",
+    "name": "Flashcards",
+    "entry": "/ui/main.qml",
+    "loadsBackend": true,
+    "supportsScaling": false,
+    "canHaveMultipleFrontends": false,
+    "version": "1.0.0"
+}
