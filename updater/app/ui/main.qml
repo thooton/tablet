@@ -181,7 +181,7 @@ Rectangle {
         }
     }
 
-    // ---- notices: a failed check, and the Reload AppLoad needs after an install
+    // ---- notices: a failed check
     Column {
         id: notices
         x: Theme.margin
@@ -189,11 +189,6 @@ Rectangle {
         width: parent.width - 2 * Theme.margin
         spacing: 24
 
-        Notice {
-            objectName: "reloadNotice"
-            visible: root.info !== null && root.info.reload && !root.info.busy
-            text: "Reload AppLoad to apply."
-        }
         Notice {
             objectName: "errorNotice"
             visible: root.info !== null && root.info.error !== ""

@@ -32,9 +32,9 @@ manifest, unpack into a staging folder (only plain files and folders under
 `/home/root/<dir>` (replacing files of the same name, leaving the rest, such
 as the user's own stories), run `sh /home/root/<dir>/install.sh` with
 `APPLOAD_DIR` set, and check that AppLoad now has the release's version.
-Then the list asks the user to close the Updater and tap Reload in
-AppLoad, which AppLoad refuses while any app is open, and which it needs
-before it opens new QML.
+The user then closes the Updater and taps Reload in AppLoad (which AppLoad
+refuses while any app is open, and needs before it opens new QML); the
+Updater doesn't remind them.
 
 Tapping a row opens What's New (the versions, the newest commits, why the
 last try failed, and GET, UPDATE or INSTALL AGAIN). WAITING cancels a
