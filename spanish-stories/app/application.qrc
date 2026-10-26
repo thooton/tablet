@@ -5,6 +5,7 @@
         <file>ui/ReaderView.qml</file>
         <file>ui/components/qmldir</file>
         <file>ui/components/IconButton.qml</file>
+        <file>ui/components/FlashArea.qml</file>
         <file>ui/components/LibraryRow.qml</file>
         <file>ui/components/MenuBox.qml</file>
         <file>ui/components/MessageBox.qml</file>
@@ -19,6 +20,10 @@
         <file>ui/images/menu.png</file>
         <file>ui/images/close.png</file>
         <file>ui/images/grab.png</file>
+        <file>ui/images/back-white.png</file>
+        <file>ui/images/menu-white.png</file>
+        <file>ui/images/close-white.png</file>
+        <file>ui/images/grab-white.png</file>
         <file>ui/fonts/NotoSerif-Regular.ttf</file>
         <file>ui/fonts/IBMPlexSans-Regular.ttf</file>
         <file>ui/fonts/IBMPlexSans-Medium.ttf</file>

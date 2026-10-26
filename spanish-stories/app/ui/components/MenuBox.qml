@@ -21,10 +21,11 @@ Rectangle {
         width: parent.width - 6
         Repeater {
             model: menu.model
-            delegate: Item {
+            delegate: Rectangle {
                 objectName: "menu_" + modelData.key
                 width: parent.width
                 height: 142
+                color: rowArea.lit ? Theme.ink : "transparent"
                 Text {
                     x: 62
                     width: parent.width - 62 - 30
@@ -32,13 +33,14 @@ Rectangle {
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
                     text: modelData.label
-                    color: Theme.ink
+                    color: rowArea.lit ? Theme.white : Theme.ink
                     font.family: menu.fonts.sans
                     font.pixelSize: 40
                 }
-                MouseArea {
+                FlashArea {
+                    id: rowArea
                     anchors.fill: parent
-                    onClicked: menu.triggered(modelData.key)
+                    onTapped: menu.triggered(modelData.key)
                 }
             }
         }

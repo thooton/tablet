@@ -2,7 +2,7 @@ import QtQuick
 import "components"
 import "js/theme.js" as Theme
 
-// Library: a back arrow and Biblioteca (back to the reMarkable) and ⋮ in the header, level
+// Library: ← (back to the reMarkable), Biblioteca centred and ⋮ in the header, level
 // tabs, then eight stories per page, most recently opened first. Swipe to
 // change page.
 Item {
@@ -59,7 +59,7 @@ Item {
         }
         Text {
             objectName: "libraryTitle"
-            x: Theme.headPad + 56 + 14
+            anchors.horizontalCenter: parent.horizontalCenter
             height: Theme.headHeight - 3
             verticalAlignment: Text.AlignVCenter
             text: "Biblioteca"
@@ -67,10 +67,6 @@ Item {
             font.family: view.fonts.sansMedium
             font.weight: Font.Medium
             font.pixelSize: 40
-            MouseArea {
-                anchors.fill: parent
-                onClicked: view.closeApp()
-            }
         }
         IconButton {
             objectName: "libraryMenuButton"

@@ -111,7 +111,7 @@ class Driver:
 
     def tap_at(self, x, y):
         QTest.mouseClick(self.view, Qt.LeftButton, Qt.NoModifier, QPoint(round(x), round(y)))
-        self.wait()
+        self.wait(300)  # a button acts once its 150 ms flash is over
 
     def tap(self, name_or_item):
         item = self.find(name_or_item) if isinstance(name_or_item, str) else name_or_item

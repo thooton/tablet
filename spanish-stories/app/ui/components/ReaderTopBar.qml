@@ -2,7 +2,8 @@ import QtQuick
 import "../js/theme.js" as Theme
 
 // Toolbar shown by tapping the top of the page: grab handle, then one row
-// with ←, the story title and level, Aa and ⋮, over a full-width rule.
+// with ←, the story title and level (centred), Aa and ⋮, over a full-width
+// rule.
 Rectangle {
     id: bar
     property string title
@@ -48,56 +49,72 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             onClicked: bar.back()
         }
-        Text {
-            id: name
-            objectName: "toolbarTitle"
-            x: backIcon.x + backIcon.width + 24
+        // The title and level, centred on the screen between ← and Aa.
+        Row {
+            id: heading
+            anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, aa.x - 60 - x - (tag.visible ? tag.width + 24 : 0))
-            elide: Text.ElideRight
-            text: bar.title
-            color: Theme.ink
-            font.family: bar.fonts.sansSemi
-            font.weight: Font.DemiBold
-            font.pixelSize: 35
-        }
-        Rectangle {
-            id: tag
-            visible: bar.level !== ""
-            x: name.x + name.width + 24
-            anchors.verticalCenter: parent.verticalCenter
-            width: tagText.implicitWidth + 18 + 4
-            height: 23 + 11 + 4
-            color: "transparent"
-            border.width: 2
-            border.color: Theme.ink
+            spacing: 24
+            readonly property real maxWidth: 2 * Math.min(row.width / 2 - (backIcon.x + backIcon.width + 60),
+                                                          aaButton.x - 60 - row.width / 2)
+
             Text {
-                id: tagText
-                x: 2 + 9
-                y: 2 + 6
-                height: 23
-                verticalAlignment: Text.AlignVCenter
-                text: bar.level
+                id: name
+                objectName: "toolbarTitle"
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, heading.maxWidth - (tag.visible ? tag.width + heading.spacing : 0))
+                elide: Text.ElideRight
+                text: bar.title
                 color: Theme.ink
-                font.family: bar.fonts.sansBold
-                font.weight: Font.Bold
-                font.pixelSize: 23
-                font.letterSpacing: 0.92
+                font.family: bar.fonts.sansSemi
+                font.weight: Font.DemiBold
+                font.pixelSize: 35
+            }
+            Rectangle {
+                id: tag
+                visible: bar.level !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                width: tagText.implicitWidth + 18 + 4
+                height: 23 + 11 + 4
+                color: "transparent"
+                border.width: 2
+                border.color: Theme.ink
+                Text {
+                    id: tagText
+                    x: 2 + 9
+                    y: 2 + 6
+                    height: 23
+                    verticalAlignment: Text.AlignVCenter
+                    text: bar.level
+                    color: Theme.ink
+                    font.family: bar.fonts.sansBold
+                    font.weight: Font.Bold
+                    font.pixelSize: 23
+                    font.letterSpacing: 0.92
+                }
             }
         }
-        Text {
-            id: aa
-            objectName: "textSettingsButton"
+        Rectangle {
+            id: aaButton
             x: menuIcon.x - 60 - width
             anchors.verticalCenter: parent.verticalCenter
-            text: "Aa"
-            color: Theme.ink
-            font.family: bar.fonts.serif
-            font.pixelSize: 42
-            MouseArea {
+            width: aa.implicitWidth + 16
+            height: aa.implicitHeight
+            color: aaArea.lit ? Theme.ink : "transparent"
+            Text {
+                id: aa
+                objectName: "textSettingsButton"
+                anchors.centerIn: parent
+                text: "Aa"
+                color: aaArea.lit ? Theme.white : Theme.ink
+                font.family: bar.fonts.serif
+                font.pixelSize: 42
+            }
+            FlashArea {
+                id: aaArea
                 anchors.fill: parent
                 anchors.margins: -24
-                onClicked: bar.textSettings()
+                onTapped: bar.textSettings()
             }
         }
         IconButton {
