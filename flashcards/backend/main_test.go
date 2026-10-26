@@ -191,3 +191,28 @@ func TestInterval(t *testing.T) {
 		}
 	}
 }
+
+func TestReviewAhead(t *testing.T) {
+	c := testCollection(3, 0)
+	stab30, stab5, diff := 30.0, 5.0, 5.0
+	soon, later := c.inDeck["d"][0], c.inDeck["d"][1]
+	soon.memory = memory{State: stateReview, Stability: &stab30, Difficulty: &diff, Due: noon + 10*day, Last: noon - 20*day}
+	later.memory = memory{State: stateReview, Stability: &stab5, Difficulty: &diff, Due: noon + 40*day, Last: noon - 2*day}
+	s := &session{c: c, deck: c.Decks[0]}
+	if s.next(noon) != nil {
+		t.Fatal("something is due")
+	}
+	s.ahead = true
+	first := s.next(noon)
+	other := later
+	if first == later {
+		other = soon
+	}
+	if first == nil || retrievability(first.memory, noon) > retrievability(other.memory, noon) {
+		t.Fatalf("not the likeliest forgotten first: %+v", first)
+	}
+	s.rate(good, noon)
+	if second := s.next(noon + 10); second == nil || second == first || second.isNew() {
+		t.Fatalf("second: %+v", second)
+	}
+}

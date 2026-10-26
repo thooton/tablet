@@ -13,7 +13,7 @@ import (
 // Messages between the QML and the backend.
 const (
 	msgHello   = 1 // UI → backend: send the state (and sync, if it has been a while)
-	msgStudy   = 2 // {"deck"}: the deck's next card
+	msgStudy   = 2 // {"deck", "ahead"?}: the deck's next card; ahead: Review Ahead
 	msgAnswer  = 3 // {"deck", "card", "rating"}: answer it, then the next card
 	msgOptions = 4 // {"deck", "new_per_day"}: change a deck's setting
 	msgSync    = 5 // sync now
@@ -63,6 +63,7 @@ func (a *app) handle(msgType int32, body []byte) {
 		Deck      string `json:"deck"`
 		Card      string `json:"card"`
 		Rating    int    `json:"rating"`
+		Ahead     bool   `json:"ahead"`
 		NewPerDay *int   `json:"new_per_day"`
 	}
 	if len(body) > 0 {
@@ -84,6 +85,11 @@ func (a *app) handle(msgType int32, body []byte) {
 		a.saveNow()
 		go a.sync()
 	case msgStudy:
+		a.mu.Lock()
+		if s := a.sessionFor(in.Deck); s != nil && s.ahead != in.Ahead {
+			s.ahead, s.last, s.current = in.Ahead, nil, nil
+		}
+		a.mu.Unlock()
 		a.sendCard(in.Deck, false)
 	case msgAnswer:
 		a.answer(in.Deck, in.Card, in.Rating)
@@ -127,7 +133,7 @@ func (a *app) sendCard(deckID string, fresh bool) {
 	if fresh || k == nil || a.col.cards[k.ID] != k {
 		k = s.next(now)
 	}
-	out := map[string]any{"deck": deckID, "name": s.deck.Name, "counts": s.counts(now)}
+	out := map[string]any{"deck": deckID, "name": s.deck.Name, "counts": s.counts(now), "ahead": s.ahead, "studied": studiedIn(s)}
 	if k == nil {
 		out["done"] = true
 		if next := s.nextLearningDue(now); next > 0 {
@@ -349,6 +355,17 @@ func (a *app) sendState() {
 	}
 	a.mu.Unlock()
 	a.send(msgState, state)
+}
+
+// studiedIn is whether the deck has a card ever answered, which Review
+// Ahead needs.
+func studiedIn(s *session) bool {
+	for _, k := range s.cards() {
+		if !k.isNew() {
+			return true
+		}
+	}
+	return false
 }
 
 // interval is how Anki's answer buttons put a wait: <1m, 10m, 3h, 4d, 1.5mo, 2.1y.

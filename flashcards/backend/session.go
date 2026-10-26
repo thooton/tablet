@@ -12,7 +12,10 @@ import "time"
 //     number, that many a day, counting every card first answered since the
 //     rollover on any device,
 //   - then learning cards due within the 20-minute learn-ahead limit,
-//   - then nothing: the deck is done for now.
+//   - then nothing: the deck is done for now; unless reviewing ahead (Anki's
+//     "Review ahead"), which goes on to studied cards not yet due, the ones
+//     most likely forgotten first (lowest predicted recall, then earliest
+//     due, then deck order), never the card just answered twice running.
 const (
 	recallTarget = 0.85
 	learnAhead   = 20 * 60
@@ -23,6 +26,8 @@ type session struct {
 	c       *collection
 	deck    *deck
 	current *card
+	ahead   bool
+	last    *card
 }
 
 func (s *session) cards() []*card { return s.c.inDeck[s.deck.ID] }
@@ -65,10 +70,29 @@ func (s *session) next(now int64) *card {
 		s.current = fresh
 	case learning != nil && learning.Due <= now+learnAhead:
 		s.current = learning
+	case s.ahead:
+		s.current = s.earliest(now)
 	default:
 		s.current = nil
 	}
 	return s.current
+}
+
+// earliest is the studied card most likely forgotten, other than the one
+// just answered, as ReviewSession.earliest on the phone.
+func (s *session) earliest(now int64) *card {
+	var best *card
+	bestRecall := 0.0
+	for _, k := range s.cards() {
+		if k.isNew() || k == s.last {
+			continue
+		}
+		r := retrievability(k.memory, now)
+		if best == nil || r < bestRecall || r == bestRecall && k.Due < best.Due {
+			best, bestRecall = k, r
+		}
+	}
+	return best
 }
 
 // rate answers the current card and marks it for the next sync.
@@ -82,6 +106,7 @@ func (s *session) rate(rating int, now int64) {
 	}
 	k.memory = review(k.memory, k.javaID, rating, now)
 	touch(&k.Mod, &k.Dirty, now*1000)
+	s.last = k
 	s.current = nil
 }
 

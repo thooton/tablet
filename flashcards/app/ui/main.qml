@@ -102,11 +102,12 @@ Rectangle {
         send(1);
         send(2, { deck: id });
     }
-    function study() {
+    // ahead: Anki's Review Ahead, the cards not yet due, likeliest forgotten first.
+    function study(ahead) {
         revealed = false;
         answering = false;
         screen = "review";
-        send(2, { deck: deckId });
+        send(2, { deck: deckId, ahead: ahead === true });
     }
     function answer(rating) {
         if (!shown || !shown.card || answering)
@@ -427,6 +428,18 @@ Rectangle {
                 color: Theme.subtle
                 font.family: fontSet.sans
                 font.pixelSize: 36
+            }
+            Item {
+                width: parent.width
+                height: 220
+                visible: !overview.any && root.shown !== null && root.shown.studied === true
+                AnkiButton {
+                    anchors.centerIn: parent
+                    width: 460
+                    fonts: fontSet
+                    text: "Review Ahead"
+                    onClicked: root.study(true)
+                }
             }
         }
         BottomBar {

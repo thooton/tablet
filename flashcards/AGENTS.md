@@ -35,7 +35,10 @@ is 720 answers made by the phone's own scheduler, and
 either side must keep it passing (regenerate it from the phone's core when
 the phone's scheduler changes on purpose). The day rolls over at 4am in
 the phone's time zone, which the phone syncs as `zone` (the tablet keeps
-UTC); `time/tzdata` is embedded since the tablet has no zoneinfo.
+UTC); `time/tzdata` is embedded since the tablet has no zoneinfo. Review
+Ahead (from a finished deck's congratulations) goes on to studied cards
+not yet due, likeliest forgotten first (`session.earliest`, the phone's
+`ReviewSession.earliest`).
 
 ## The look
 
@@ -58,13 +61,13 @@ is no scrolling. IBM Plex Sans, as the Updater has it.
 | Type | Direction | Meaning |
 |---|---|---|
 | 1 | UI → backend | send the state (and sync if the last one is over a minute old) |
-| 2 | | `{"deck"}`: send the deck's next card |
+| 2 | | `{"deck", "ahead"?}`: send the deck's next card; `ahead` turns Review Ahead on (or, absent, off) |
 | 3 | | `{"deck", "card", "rating"}`: answer it (1 to 4), then send the next |
 | 4 | | `{"deck", "new_per_day"}`: -1 for Auto, else a number |
 | 5 | | sync now |
 | 6 | | ask for a new pairing code |
 | 101 | backend → UI | the state: `decks` (`id`, `name`, `newPerDay`, `counts`), `studied`, `paired`, `host`, `syncing`, `error`, `code`, `pairing`, `pairErr` |
-| 102 | | `{"deck", "name", "counts", "queue", "card": {"id", "front", "back", "aux", "intervals"}}`, or `{"deck", "counts", "done": true, "nextMinutes"?, "recheck"?}` |
+| 102 | | `{"deck", "name", "counts", "queue", "card": {"id", "front", "back", "aux", "intervals"}}`, or `{"deck", "counts", "done": true, "nextMinutes"?, "recheck"?}`; each also `ahead` and `studied` (whether Review Ahead has anything) |
 
 ## Layout
 
