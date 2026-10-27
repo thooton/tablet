@@ -571,12 +571,6 @@ Rectangle {
                     lineHeight: 1.15
                 }
             }
-            // A tap on the card shows the answer.
-            MouseArea {
-                anchors.fill: parent
-                enabled: !root.revealed
-                onClicked: root.revealed = true
-            }
         }
 
         // Anki's bottom bar: the counts over Show Answer, then the answers.
