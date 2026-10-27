@@ -44,7 +44,9 @@ not yet due, likeliest forgotten first (`session.earliest`, the phone's
 
 ## The look
 
-Anki's desktop window: its toolbar (Decks, Sync) centred over the page;
+Anki's desktop window under the other apps' header: ← and where it leads
+from (Flashcards on the deck list, where ← closes the app; the deck's name
+anywhere in a deck, where ← goes up a level), Sync on the right;
 the deck table (Deck, New, Learn, Due) with "Studied N cards today." under
 it; the overview (the deck's name, New / Learning / To Review, Study Now,
 Options in the bottom bar); the reviewer (the card centred, the answer
@@ -55,8 +57,8 @@ apart by colour a shape does (`components/Mark.qml`): New a triangle,
 Learning a square, To Review a circle; a queue with nothing in it is
 faint; the current card's count is bold and underlined. Anki's blue focus
 ring, which marks what Enter presses (Study Now, Show Answer, Good), is a
-heavier outline (`AnkiButton.preferred`). Long cards shrink to fit; there
-is no scrolling. IBM Plex Sans, as the Updater has it.
+heavier outline (`AnkiButton.preferred`). Card text is plain, its newlines
+kept and its ends trimmed. Long cards shrink to fit; there is no scrolling. IBM Plex Sans, as the Updater has it.
 
 ## Messages
 

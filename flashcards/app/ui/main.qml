@@ -4,7 +4,7 @@ import "components"
 import "js/theme.js" as Theme
 
 // Flashcards: Anki's desktop window on the reMarkable, in black and white.
-// Its toolbar (Decks, Sync), the deck list, a deck's overview with Study
+// Its toolbar (← and where it leads from, Sync), the deck list, a deck's overview with Study
 // Now, the reviewer, and the deck's options; and, until the tablet is
 // paired with the command center, the pairing code. Where Anki tells the
 // queues apart by colour, a shape does: New a triangle, Learning a square,
@@ -149,7 +149,21 @@ Rectangle {
 
     readonly property bool paired: info !== null && info.paired
 
-    // ---- toolbar: Decks and Sync, centred, as in Anki; and the way out
+    // One step up: the reviewer and the options to the deck's overview, the
+    // overview to the decks, the decks out of the app.
+    function back() {
+        if (screen === "review" || screen === "options") {
+            screen = "overview";
+            send(1);
+            send(2, { deck: deckId });
+        } else if (screen === "overview")
+            showDecks();
+        else
+            close();
+    }
+
+    // ---- toolbar: ← and where it leads from, as the other apps have it;
+    // Sync on the right
     Item {
         id: toolbar
         width: parent.width
@@ -157,28 +171,39 @@ Rectangle {
         visible: root.paired
 
         Row {
-            anchors.centerIn: parent
-            spacing: 80
-            ToolLink {
-                text: "Decks"
-                current: root.screen === "decks"
-                onClicked: root.showDecks()
+            id: backRow
+            x: 44
+            height: parent.height
+            spacing: 18
+            Image {
+                source: "images/back.png"
+                anchors.verticalCenter: parent.verticalCenter
             }
-            ToolLink {
-                text: root.info && root.info.syncing ? "Syncing…" : "Sync"
-                onClicked: root.send(5)
+            Text {
+                id: backTitle
+                width: Math.min(implicitWidth, toolbar.width - 2 * Theme.margin - sync.width - 44 - 56 - 18)
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.screen === "decks" ? "Flashcards" : (root.deck ? root.deck.name : "")
+                elide: Text.ElideRight
+                color: Theme.ink
+                font.family: fontSet.sansMedium
+                font.weight: Font.Medium
+                font.pixelSize: 38
             }
         }
-        Image {
-            source: "images/close.png"
+        // ← and its title, with a margin round them.
+        MouseArea {
+            width: backRow.x + backRow.width + 30
+            height: parent.height
+            onClicked: root.back()
+        }
+        ToolLink {
+            id: sync
             anchors.right: parent.right
-            anchors.rightMargin: 44
+            anchors.rightMargin: Theme.margin
             anchors.verticalCenter: parent.verticalCenter
-            MouseArea {
-                anchors.fill: parent
-                anchors.margins: -28
-                onClicked: root.close()
-            }
+            text: root.info && root.info.syncing ? "Syncing…" : "Sync"
+            onClicked: root.send(5)
         }
         Rectangle {
             anchors.bottom: parent.bottom
@@ -504,7 +529,8 @@ Rectangle {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    text: reviewer.card ? reviewer.card.front : ""
+                    textFormat: Text.PlainText
+                    text: reviewer.card ? reviewer.card.front.trim() : ""
                     color: Theme.ink
                     font.family: fontSet.sans
                     font.pixelSize: Math.round(64 * reviewer.fontScale)
@@ -525,18 +551,20 @@ Rectangle {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    text: reviewer.card ? reviewer.card.back : ""
+                    textFormat: Text.PlainText
+                    text: reviewer.card ? reviewer.card.back.trim() : ""
                     color: Theme.ink
                     font.family: fontSet.sans
                     font.pixelSize: Math.round(64 * reviewer.fontScale)
                 }
                 Text {
-                    visible: root.revealed && reviewer.card !== null && reviewer.card.aux !== ""
+                    visible: root.revealed && reviewer.card !== null && reviewer.card.aux.trim() !== ""
                     width: parent.width
                     topPadding: Math.round(40 * reviewer.fontScale)
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    text: reviewer.card ? reviewer.card.aux : ""
+                    textFormat: Text.PlainText
+                    text: reviewer.card ? reviewer.card.aux.trim() : ""
                     color: Theme.subtle
                     font.family: fontSet.sans
                     font.pixelSize: Math.round(40 * reviewer.fontScale)
@@ -782,9 +810,8 @@ Rectangle {
         anchors.fill: parent
 
         Image {
-            source: "images/close.png"
-            anchors.right: parent.right
-            anchors.rightMargin: 44
+            source: "images/back.png"
+            x: 44
             y: (Theme.toolbarHeight - height) / 2
             MouseArea {
                 anchors.fill: parent
