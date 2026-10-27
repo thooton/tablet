@@ -112,30 +112,50 @@ func TestDailyLimit(t *testing.T) {
 	}
 }
 
-func TestAutoWindow(t *testing.T) {
+func TestAutoTopsUpToTheTarget(t *testing.T) {
 	c := testCollection(25, auto)
 	s := &session{c: c, deck: c.Decks[0]}
-	if got := s.counts(noon)[0]; got != autoWindow {
+	if got := s.counts(noon)[0]; got != autoTarget {
 		t.Fatalf("new on offer: %d", got)
 	}
-	// Again keeps each new card learning, so the window fills.
-	for i := 0; i < autoWindow; i++ {
-		if k := s.next(noon); k == nil || !k.isNew() {
-			t.Fatalf("card %d isn't new: %+v", i, k)
+	stab, diff := 10.0, 5.0
+	for _, k := range c.inDeck["d"][:12] {
+		k.memory = memory{State: stateReview, Stability: &stab, Difficulty: &diff, Due: noon - 3600, Last: noon - 3600 - 10*day}
+	}
+	n := s.counts(noon)
+	if n != [3]int{8, 0, 12} {
+		t.Fatalf("counts %v, want 8 new to make 20 with 12 due", n)
+	}
+}
+
+// mixOrder is the order new (n) and review (r) cards come in, ten reviews
+// due and the rest new, every card answered Easy. The phone's ReviewSession
+// gives the same (AlgoTests: new cards mixed in among reviews).
+func mixOrder(steps int) string {
+	c := testCollection(25, auto)
+	stab, diff := 10.0, 5.0
+	for _, k := range c.inDeck["d"][:10] {
+		k.memory = memory{State: stateReview, Stability: &stab, Difficulty: &diff, Due: noon - 3600, Last: noon - 3600 - 10*day}
+	}
+	s := &session{c: c, deck: c.Decks[0]}
+	out := []byte{}
+	now := noon
+	for i := 0; i < steps; i++ {
+		k := s.next(now)
+		if k.isNew() {
+			out = append(out, 'n')
+		} else {
+			out = append(out, 'r')
 		}
-		s.rate(again, noon)
+		s.rate(easy, now)
+		now += 10
 	}
-	if got := s.counts(noon)[0]; got != 0 {
-		t.Fatalf("new on offer with the window full: %d", got)
-	}
-	if k := s.next(noon); k == nil || k.isNew() {
-		t.Fatalf("a new card with the window full: %+v", k)
-	}
-	later := noon + 3600
-	s.next(later)
-	s.rate(easy, later)
-	if got := s.counts(later)[0]; got != 1 {
-		t.Fatalf("one graduated, so one slot: %d", got)
+	return string(out)
+}
+
+func TestNewCardsMixIntoReviews(t *testing.T) {
+	if got := mixOrder(12); got != "rnnrnrnnrnrn" {
+		t.Fatalf("order %s", got)
 	}
 }
 

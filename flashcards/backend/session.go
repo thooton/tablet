@@ -7,18 +7,20 @@ import "time"
 //
 //   - learning and relearning cards first once due (steps 1m 10m, and 10m),
 //   - then the day's reviews, due before the next 4am rollover, oldest first,
-//   - then new cards in deck order: with a number, that many a day, counting
-//     every card first answered since the rollover on any device; on AUTO,
-//     with no daily number, one at a time while fewer than autoWindow cards
-//     are in learning or relearning (the only change from Anki, and only to
-//     when a new card is introduced),
+//     with new cards mixed in among them, spread evenly, as Anki's default
+//     "Mix with reviews" does; new cards come in deck order, and how many:
+//     with a number, that many a day, counting every card first answered
+//     since the rollover on any device; on AUTO, enough to bring New +
+//     Learning + Due up to autoTarget, so none while Learning + Due is at it
+//     or over (the only change from Anki, and only to when a new card is
+//     introduced),
 //   - then learning cards due within the 20-minute learn-ahead limit,
 //   - then nothing: the deck is done for now; unless reviewing ahead (Anki's
 //     "Review ahead"), which goes on to studied cards not yet due, the ones
 //     most likely forgotten first (lowest predicted recall, then earliest
 //     due, then deck order), never the card just answered twice running.
 const (
-	autoWindow   = 20 // ReviewSession.AUTO_WINDOW
+	autoTarget   = 20 // ReviewSession.AUTO_TARGET
 	learnAhead   = 20 * 60
 	rolloverHour = 4
 )
@@ -29,6 +31,8 @@ type session struct {
 	current *card
 	ahead   bool
 	last    *card
+	// New cards and reviews shown this session, to spread one among the other.
+	newShown, reviewsShown int
 }
 
 func (s *session) cards() []*card { return s.c.inDeck[s.deck.ID] }
@@ -59,12 +63,18 @@ func (s *session) next(now int64) *card {
 			rev = k
 		}
 	}
-	if fresh != nil && !s.wantsNew(now) {
+	counts := s.counts(now)
+	if counts[0] == 0 {
 		fresh = nil
 	}
 	switch {
 	case learning != nil && learning.Due <= now:
 		s.current = learning
+	case rev != nil && fresh != nil:
+		s.current = rev
+		if s.newTurn(counts[0], counts[2]) {
+			s.current = fresh
+		}
 	case rev != nil:
 		s.current = rev
 	case fresh != nil:
@@ -77,6 +87,13 @@ func (s *session) next(now int64) *card {
 		s.current = nil
 	}
 	return s.current
+}
+
+// newTurn is whether a new card's turn has come among the reviews: so far
+// this session new cards have had less than their share of what is left, as
+// Anki's intersperser spreads them. A review goes first.
+func (s *session) newTurn(fresh, reviews int) bool {
+	return int64(s.newShown)*int64(reviews) < int64(s.reviewsShown)*int64(fresh)
 }
 
 // earliest is the studied card most likely forgotten, other than the one
@@ -104,6 +121,9 @@ func (s *session) rate(rating int, now int64) {
 	}
 	if k.isNew() {
 		k.Intro = now
+		s.newShown++
+	} else if !k.learning() {
+		s.reviewsShown++
 	}
 	k.memory = review(k.memory, k.javaID, rating, now)
 	touch(&k.Mod, &k.Dirty, now*1000)
@@ -111,25 +131,16 @@ func (s *session) rate(rating int, now int64) {
 	s.current = nil
 }
 
-// inLearning counts the cards in learning or relearning, due or not.
-func (s *session) inLearning() int {
-	n := 0
-	for _, k := range s.cards() {
-		if !k.isNew() && k.learning() {
-			n++
-		}
-	}
-	return n
-}
-
 func (s *session) wantsNew(now int64) bool {
 	return s.newLeft(now) > 0
 }
 
-// newLeft is how many more new cards today's limit allows.
+// newLeft is how many more new cards may come in: today's limit, less those
+// already introduced; on AUTO, what brings New + Learning + Due up to the target.
 func (s *session) newLeft(now int64) int {
 	if s.deck.NewPerDay < 0 {
-		return max(0, autoWindow-s.inLearning())
+		learning, reviews := s.oldCounts(now)
+		return max(0, autoTarget-learning-reviews)
 	}
 	start := s.dayEnd(now) - day
 	today := 0
@@ -144,12 +155,22 @@ func (s *session) newLeft(now int64) int {
 // counts are Anki's: new cards on offer, learning cards due within
 // learn-ahead, and reviews due today.
 func (s *session) counts(now int64) [3]int {
+	unseen := 0
+	for _, k := range s.cards() {
+		if k.isNew() {
+			unseen++
+		}
+	}
+	learning, reviews := s.oldCounts(now)
+	return [3]int{min(unseen, s.newLeft(now)), learning, reviews}
+}
+
+// oldCounts are learning cards due within learn-ahead, and reviews due today.
+func (s *session) oldCounts(now int64) (learning, reviews int) {
 	end := s.dayEnd(now)
-	unseen, learning, reviews := 0, 0, 0
 	for _, k := range s.cards() {
 		switch {
 		case k.isNew():
-			unseen++
 		case k.learning():
 			if k.Due <= now+learnAhead {
 				learning++
@@ -158,11 +179,7 @@ func (s *session) counts(now int64) [3]int {
 			reviews++
 		}
 	}
-	fresh := 0
-	if s.wantsNew(now) {
-		fresh = min(unseen, s.newLeft(now))
-	}
-	return [3]int{fresh, learning, reviews}
+	return learning, reviews
 }
 
 // nextLearningDue is when the next learning card due today comes up, or 0.
