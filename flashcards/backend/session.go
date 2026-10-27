@@ -18,7 +18,7 @@ import "time"
 //     most likely forgotten first (lowest predicted recall, then earliest
 //     due, then deck order), never the card just answered twice running.
 const (
-	autoWindow   = 10 // ReviewSession.AUTO_WINDOW
+	autoWindow   = 20 // ReviewSession.AUTO_WINDOW
 	learnAhead   = 20 * 60
 	rolloverHour = 4
 )
