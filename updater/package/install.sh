@@ -40,7 +40,13 @@ done
 # keeps its old binary until it exits.
 rm -rf "$DIR.new"
 mkdir -p "$DIR.new/backend"
-cp "$PKG/app/manifest.json" "$PKG/app/icon.png" "$PKG/app/resources.rcc" "$DIR.new/"
+cp "$PKG/app/manifest.json" "$PKG/app/resources.rcc" "$DIR.new/"
+# AppLoad shows icon.png by its real path, and the tablet's UI keeps an image
+# it has loaded until it restarts: name each icon by its checksum and link
+# icon.png to it, so a new icon has a new path and shows after Reload.
+ICON="icon-$({ cksum < "$PKG/app/icon.png" || date +%s; } 2>/dev/null | cut -d' ' -f1).png"
+cp "$PKG/app/icon.png" "$DIR.new/$ICON"
+ln -s "$ICON" "$DIR.new/icon.png"
 [ -f "$PKG/app/FONTS-LICENSE.txt" ] && cp "$PKG/app/FONTS-LICENSE.txt" "$DIR.new/"
 cp "$PKG/app/backend/entry-$ARCH" "$DIR.new/backend/entry"
 chmod 755 "$DIR.new/backend/entry"

@@ -63,7 +63,9 @@ The Updater and CI rely on this layout. An app in `<dir>/`:
 - `package/install.sh`: runs on the tablet from `/home/root/<dir>/`, the
   unpacked download. It copies `app/` into `$APPLOAD_DIR/<id>` (default
   `/home/root/xovi/exthome/appload`), with the backend for `uname -m` as
-  `backend/entry` and `manifest.json` as is, so the Updater can read the
+  `backend/entry`, the icon as `icon-<cksum>.png` with `icon.png` a link to
+  it (the tablet's UI caches images by path until it restarts, so a new icon
+  needs a new path), and `manifest.json` as is, so the Updater can read the
   installed version there. It must be safe to run again over an older
   install, keep the user's data, and exit non-zero with a message when it
   fails. `uninstall.sh` and `README.txt` beside it.

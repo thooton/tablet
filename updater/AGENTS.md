@@ -75,7 +75,7 @@ The backend also checks when a frontend attaches (-2), as above.
   each row says), `js/theme.js`.
 - `package/`: install.sh, uninstall.sh, README.txt (also the first,
   by-hand install).
-- `tools/build.py`, `tools/generate_assets.py` (the icon; needs PySide6).
+- `tools/build.py`; the icon comes from the repository's `tools/make_icons.py`.
 
 ## Testing
 
