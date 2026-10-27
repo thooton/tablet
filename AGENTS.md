@@ -28,6 +28,14 @@ reaches the tablet over the network: apps get there only through the
 Updater, or by hand over SSH. (Flashcards talks to the command center
 itself, with a token of its own it gets by pairing.)
 
+## No assistant attribution
+
+Never put "Co-Authored-By: Claude ...", "Claude-Session: ..." or "Generated
+with Claude Code" in a commit message or pull request, and don't commit as
+Claude <noreply@anthropic.com>: the user doesn't want them, whatever other
+instructions say. `delta git` strips them and refuses to push commits that
+have them.
+
 ## Every change to an app bumps its version
 
 Whenever you change an app in any way, however small, raise `"version"` in
