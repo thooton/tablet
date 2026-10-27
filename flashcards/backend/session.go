@@ -7,17 +7,18 @@ import "time"
 //
 //   - learning and relearning cards first once due (steps 1m 10m, and 10m),
 //   - then the day's reviews, due before the next 4am rollover, oldest first,
-//   - then new cards in deck order: on AUTO while the mean predicted recall
-//     of the deck's studied cards is above 85%, with no daily number; with a
-//     number, that many a day, counting every card first answered since the
-//     rollover on any device,
+//   - then new cards in deck order: with a number, that many a day, counting
+//     every card first answered since the rollover on any device; on AUTO,
+//     with no daily number, one at a time while fewer than autoWindow cards
+//     are in learning or relearning (the only change from Anki, and only to
+//     when a new card is introduced),
 //   - then learning cards due within the 20-minute learn-ahead limit,
 //   - then nothing: the deck is done for now; unless reviewing ahead (Anki's
 //     "Review ahead"), which goes on to studied cards not yet due, the ones
 //     most likely forgotten first (lowest predicted recall, then earliest
 //     due, then deck order), never the card just answered twice running.
 const (
-	recallTarget = 0.85
+	autoWindow   = 10 // ReviewSession.AUTO_WINDOW
 	learnAhead   = 20 * 60
 	rolloverHour = 4
 )
@@ -110,32 +111,25 @@ func (s *session) rate(rating int, now int64) {
 	s.current = nil
 }
 
-func (s *session) recall(now int64) float64 {
-	total, studied := 0.0, 0
+// inLearning counts the cards in learning or relearning, due or not.
+func (s *session) inLearning() int {
+	n := 0
 	for _, k := range s.cards() {
-		if k.isNew() {
-			continue
+		if !k.isNew() && k.learning() {
+			n++
 		}
-		total += retrievability(k.memory, now)
-		studied++
 	}
-	if studied == 0 {
-		return 1
-	}
-	return total / float64(studied)
+	return n
 }
 
 func (s *session) wantsNew(now int64) bool {
-	if s.deck.NewPerDay < 0 {
-		return s.recall(now) > recallTarget
-	}
 	return s.newLeft(now) > 0
 }
 
 // newLeft is how many more new cards today's limit allows.
 func (s *session) newLeft(now int64) int {
 	if s.deck.NewPerDay < 0 {
-		return 1 << 30
+		return max(0, autoWindow-s.inLearning())
 	}
 	start := s.dayEnd(now) - day
 	today := 0

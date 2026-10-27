@@ -112,11 +112,30 @@ func TestDailyLimit(t *testing.T) {
 	}
 }
 
-func TestAutoTakesEveryNewCardWhileRecallHolds(t *testing.T) {
+func TestAutoWindow(t *testing.T) {
 	c := testCollection(25, auto)
 	s := &session{c: c, deck: c.Decks[0]}
-	if got := s.counts(noon)[0]; got != 25 {
+	if got := s.counts(noon)[0]; got != autoWindow {
 		t.Fatalf("new on offer: %d", got)
+	}
+	// Again keeps each new card learning, so the window fills.
+	for i := 0; i < autoWindow; i++ {
+		if k := s.next(noon); k == nil || !k.isNew() {
+			t.Fatalf("card %d isn't new: %+v", i, k)
+		}
+		s.rate(again, noon)
+	}
+	if got := s.counts(noon)[0]; got != 0 {
+		t.Fatalf("new on offer with the window full: %d", got)
+	}
+	if k := s.next(noon); k == nil || k.isNew() {
+		t.Fatalf("a new card with the window full: %+v", k)
+	}
+	later := noon + 3600
+	s.next(later)
+	s.rate(easy, later)
+	if got := s.counts(later)[0]; got != 1 {
+		t.Fatalf("one graduated, so one slot: %d", got)
 	}
 }
 

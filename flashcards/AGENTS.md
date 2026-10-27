@@ -28,8 +28,9 @@ center's address is `defaultServer` in `backend/center.go`
 `Scheduler` line for line (FSRS-6 defaults, steps 1m 10m and 10m, fuzz
 seeded with java.util.Random from the card's id and last review, as the
 phone seeds it), and `backend/session.go` is `ReviewSession` (learning,
-then today's reviews, then new cards, then learn-ahead; new cards on AUTO
-while recall is above 85%, or a number a day). `testdata/java-fsrs.json`
+then today's reviews, then new cards, then learn-ahead; new cards a number
+a day, or on AUTO one at a time while fewer than 10 cards are in learning
+or relearning, which only decides when a new card comes in). `testdata/java-fsrs.json`
 is 720 answers made by the phone's own scheduler, and
 `TestReviewMatchesThePhone` replays them: any change to the scheduling on
 either side must keep it passing (regenerate it from the phone's core when
