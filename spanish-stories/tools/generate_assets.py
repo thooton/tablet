@@ -1,4 +1,5 @@
-"""Draws the app's bitmap assets (dotted-underline tile, icons, launcher icon).
+"""Draws the app's bitmap assets (dotted-underline tile, icons); the launcher
+icon comes from the repository's tools/make_icons.py.
 
 Run with the emulator's Python (it needs PySide6):
     python tools/generate_assets.py
@@ -6,7 +7,7 @@ Run with the emulator's Python (it needs PySide6):
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QFontDatabase, QGuiApplication, QImage, QPainter, QPainterPath, QPen
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -66,46 +67,11 @@ def icons(folder: Path) -> None:
         stroke_icon(folder / f"grab{suffix}.png", 96, 22, [[(4, 4), (48, 18), (92, 4)]], width=4, color=color)
 
 
-def icon(path: Path, size: int) -> None:
-    """An open book in AppLoad's rounded frame, drawn in the line icons' ink."""
-    img = QImage(size, size, QImage.Format_ARGB32)
-    img.fill(Qt.transparent)
-    p = QPainter(img)
-    p.setRenderHint(QPainter.Antialiasing)
-    s = size / 128.0
-    p.setPen(QPen(QColor("black"), 6 * s))
-    p.setBrush(QBrush(QColor("white")))
-    p.drawRoundedRect(QRectF(5 * s, 5 * s, 118 * s, 118 * s), 20 * s, 20 * s)
-
-    pen = QPen(QColor("black"), 6 * s, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-    p.setPen(pen)
-    p.setBrush(Qt.NoBrush)
-    for side in (-1, 1):
-        def x(v):
-            return (64 + side * v) * s
-        # A page: from the spine out along a gentle curve, down, and back.
-        page = QPainterPath(QPointF(x(0), 42 * s))
-        page.cubicTo(QPointF(x(12), 33 * s), QPointF(x(28), 31 * s), QPointF(x(42), 34 * s))
-        page.lineTo(x(42), 92 * s)
-        page.cubicTo(QPointF(x(28), 89 * s), QPointF(x(12), 91 * s), QPointF(x(0), 100 * s))
-        p.drawPath(page)
-        # Lines of text.
-        thin = QPen(QColor("black"), 4 * s, Qt.SolidLine, Qt.RoundCap)
-        p.setPen(thin)
-        for i, y in enumerate((50, 61, 72)):
-            p.drawLine(QPointF(x(10), (y + 1) * s), QPointF(x(34 if i < 2 else 26), (y - 1) * s))
-        p.setPen(pen)
-    p.drawLine(QPointF(64 * s, 42 * s), QPointF(64 * s, 100 * s))
-    p.end()
-    img.save(str(path))
-
-
 def main() -> int:
     app = QGuiApplication(sys.argv[:1] + ["-platform", "offscreen"])
     (UI / "images").mkdir(parents=True, exist_ok=True)
     dots_tile(UI / "images" / "dots.png")
     icons(UI / "images")
-    icon(ROOT / "app" / "icon.png", 128)
     print("assets written")
     del app
     return 0
