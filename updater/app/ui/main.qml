@@ -84,10 +84,11 @@ Rectangle {
                 return apps[i];
         return null;
     }
-    // An app keeps its group while it installs, so the list doesn't jump
-    // under the finger.
+    // An app keeps its group only while it is actively installing, so the
+    // list doesn't jump under the finger mid-install. Once the job has
+    // finished (or failed) the row sits where its real status puts it.
     function group(app) {
-        var s = app.job && app.job.from ? app.job.from : app.status;
+        var s = Format.active(app) && app.job.from ? app.job.from : app.status;
         return s === "update" ? 0 : s === "get" ? 1 : 2;
     }
     readonly property var updatable: apps.filter(a => a.status === "update" && !Format.active(a))

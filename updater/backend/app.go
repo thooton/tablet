@@ -29,7 +29,8 @@ type Job struct {
 	Phase   string `json:"phase"` // waiting | downloading | installing | done | failed
 	Percent int    `json:"percent"`
 	Message string `json:"message,omitempty"` // why it failed
-	From    string `json:"from"`              // the app's status when it was queued, which keeps its group in the list
+	From    string `json:"from"`              // the app's status when it was queued, which keeps its group while it installs
+	Target  string `json:"target,omitempty"`  // the release version this job installs; a finished job is dropped once it no longer applies
 }
 
 // AppState is one row of the list.
@@ -133,6 +134,14 @@ func (a *App) check() {
 		return
 	}
 	a.checking = true
+	// A fresh check clears the DONE marks left by finished installs: they are
+	// just-finished feedback, not a lasting state. Failures stay (with RETRY)
+	// until they are retried or a new release replaces them (pruneJobsLocked).
+	for dir, j := range a.jobs {
+		if j.Phase == "done" {
+			delete(a.jobs, dir)
+		}
+	}
 	a.mu.Unlock()
 	a.publish()
 
@@ -197,13 +206,14 @@ func (a *App) install(apps []string) {
 		return
 	}
 	for _, dir := range apps {
-		if _, ok := a.manifest.Apps[dir]; !ok {
+		e, ok := a.manifest.Apps[dir]
+		if !ok {
 			continue
 		}
 		if j := a.jobs[dir]; j != nil && (j.Phase == "waiting" || j.Phase == "downloading" || j.Phase == "installing") {
 			continue
 		}
-		a.jobs[dir] = &Job{Phase: "waiting", From: a.status(a.manifest.Apps[dir])}
+		a.jobs[dir] = &Job{Phase: "waiting", From: a.status(e), Target: e.Version}
 		a.queue = append(a.queue, dir)
 	}
 	sort.SliceStable(a.queue, func(i, j int) bool { return a.queue[j] == selfDir && a.queue[i] != selfDir })
@@ -253,9 +263,9 @@ func (a *App) work() {
 		j := a.jobs[dir]
 		if err != nil {
 			logf("install %s: %v", dir, err)
-			a.jobs[dir] = &Job{Phase: "failed", Message: friendly(err), From: j.From}
+			a.jobs[dir] = &Job{Phase: "failed", Message: friendly(err), From: j.From, Target: j.Target}
 		} else {
-			a.jobs[dir] = &Job{Phase: "done", Percent: 100, From: j.From}
+			a.jobs[dir] = &Job{Phase: "done", Percent: 100, From: j.From, Target: j.Target}
 			a.reload = true
 		}
 		a.mu.Unlock()
@@ -265,7 +275,7 @@ func (a *App) work() {
 
 func (a *App) setJob(dir, phase string, percent int) {
 	a.mu.Lock()
-	a.jobs[dir] = &Job{Phase: phase, Percent: percent, From: a.jobs[dir].From}
+	a.jobs[dir] = &Job{Phase: phase, Percent: percent, From: a.jobs[dir].From, Target: a.jobs[dir].Target}
 	last, seen := a.lastSent[dir]
 	quiet := phase == "downloading" && seen && percent-last < 5 && percent < 100
 	if !quiet {
@@ -355,6 +365,7 @@ func (a *App) state() State {
 	if a.manifest == nil {
 		return s
 	}
+	a.pruneJobsLocked()
 	s.Built = a.manifest.Built
 	for dir, e := range a.manifest.Apps {
 		v, ok := installedVersion(a.appload, e.ID)
@@ -373,6 +384,38 @@ func (a *App) state() State {
 	}
 	sort.Slice(s.Apps, func(i, j int) bool { return strings.ToLower(s.Apps[i].Name) < strings.ToLower(s.Apps[j].Name) })
 	return s
+}
+
+// pruneJobsLocked drops finished jobs (done/failed) that no longer match an
+// app's current standing, so a row never keeps showing DONE or RETRY once the
+// install, or a new release, has moved it on. Active jobs
+// (waiting/downloading/installing) are always kept, so a row doesn't change
+// group under the finger mid-install. Call with a.mu held and a.manifest set.
+func (a *App) pruneJobsLocked() {
+	for dir, j := range a.jobs {
+		if j.Phase != "done" && j.Phase != "failed" {
+			continue
+		}
+		e, ok := a.manifest.Apps[dir]
+		if !ok {
+			delete(a.jobs, dir) // no longer in the release
+			continue
+		}
+		switch st := a.status(e); j.Phase {
+		case "done":
+			// Keep DONE only while that install is still what's on the tablet;
+			// a newer release turns the row back into an UPDATE.
+			if st != "current" && st != "newer" {
+				delete(a.jobs, dir)
+			}
+		case "failed":
+			// Keep the failure and its RETRY only while that same release is
+			// still the one left to install.
+			if (st != "update" && st != "get") || j.Target != e.Version {
+				delete(a.jobs, dir)
+			}
+		}
+	}
 }
 
 // status is what the tablet has of an app, next to the release.

@@ -274,6 +274,103 @@ func TestCheckAndInstall(t *testing.T) {
 	}
 }
 
+// After an install the row shows DONE, but that mark is transient: a new
+// release turns the row back into an UPDATE (the done job is dropped), and a
+// plain re-check with no new release clears it too. This is the bug where a
+// just-updated app stayed stuck under UPDATES showing DONE and wouldn't offer
+// the next version without being reopened by hand.
+func TestDoneMarkClears(t *testing.T) {
+	if _, err := os.Stat("/bin/sh"); err != nil {
+		t.Skip("needs /bin/sh")
+	}
+	f := newFakeRelease(t)
+	m := &Manifest{Schema: 1, Apps: map[string]Entry{}}
+	f.addApp(t, m, "demo", "demo", "1.0.0", "")
+	f.publish(m)
+
+	home := t.TempDir()
+	appload := filepath.Join(home, "appload")
+	rec := &recorder{}
+	app := newApp(newRelease(f.server.URL), appload, home, filepath.Join(home, "cache"), rec.send)
+	defer app.close()
+
+	app.handle(msgCheck, nil)
+	rec.waitFor(t, "the manifest", func(s State) bool { return !s.Checking && len(s.Apps) == 1 })
+	if got := find(rec.last(), "demo").Status; got != "get" {
+		t.Fatalf("demo: status %q, want get", got)
+	}
+
+	app.handle(msgInstall, []byte(`{"apps": ["demo"]}`))
+	rec.waitFor(t, "the install", func(s State) bool {
+		a := find(s, "demo")
+		return !s.Busy && a.Status == "current" && a.Job != nil && a.Job.Phase == "done"
+	})
+
+	// A new release: the done mark is dropped and the row offers the update.
+	f.addApp(t, m, "demo", "demo", "1.1.0", "")
+	f.publish(m)
+	app.handle(msgCheck, nil)
+	s := rec.waitFor(t, "the newer release", func(s State) bool {
+		return !s.Checking && find(s, "demo").Version == "1.1.0"
+	})
+	if a := find(s, "demo"); a.Status != "update" || a.Job != nil {
+		t.Fatalf("after a new release: status %q, job %+v; want update with no job", a.Status, a.Job)
+	}
+
+	// Install the newer one, then re-check with nothing new: DONE still clears.
+	app.handle(msgInstall, []byte(`{"apps": ["demo"]}`))
+	rec.waitFor(t, "the second install", func(s State) bool {
+		a := find(s, "demo")
+		return !s.Busy && a.Status == "current" && a.Job != nil && a.Job.Phase == "done"
+	})
+	app.handle(msgCheck, nil)
+	s = rec.waitFor(t, "the re-check", func(s State) bool { return !s.Checking })
+	if a := find(s, "demo"); a.Status != "current" || a.Job != nil {
+		t.Fatalf("after a plain re-check: status %q, job %+v; want current with no job", a.Status, a.Job)
+	}
+}
+
+// A failed install keeps its RETRY until a new release supersedes it.
+func TestFailedMarkClearsOnNewRelease(t *testing.T) {
+	f := newFakeRelease(t)
+	m := &Manifest{Schema: 1, Apps: map[string]Entry{}}
+	f.addApp(t, m, "demo", "demo", "1.0.0", "")
+	e := m.Apps["demo"]
+	e.SHA256 = strings.Repeat("0", 64) // wrong checksum: the install fails
+	m.Apps["demo"] = e
+	f.publish(m)
+
+	home := t.TempDir()
+	rec := &recorder{}
+	app := newApp(newRelease(f.server.URL), filepath.Join(home, "appload"), home, filepath.Join(home, "cache"), rec.send)
+	defer app.close()
+	app.handle(msgCheck, nil)
+	rec.waitFor(t, "the manifest", func(s State) bool { return len(s.Apps) == 1 })
+	app.handle(msgInstall, []byte(`{"apps": ["demo"]}`))
+	rec.waitFor(t, "the failure", func(s State) bool {
+		a := find(s, "demo")
+		return !s.Busy && a.Job != nil && a.Job.Phase == "failed"
+	})
+
+	// A re-check with the same release keeps the failure and its RETRY.
+	app.handle(msgCheck, nil)
+	s := rec.waitFor(t, "the re-check", func(s State) bool { return !s.Checking })
+	if a := find(s, "demo"); a.Job == nil || a.Job.Phase != "failed" {
+		t.Fatalf("same release: job %+v, want the failure kept", a.Job)
+	}
+
+	// A new release drops the stale failure so the fresh version shows plainly.
+	f.addApp(t, m, "demo", "demo", "1.1.0", "") // a good archive this time
+	f.publish(m)
+	app.handle(msgCheck, nil)
+	s = rec.waitFor(t, "the newer release", func(s State) bool {
+		return !s.Checking && find(s, "demo").Version == "1.1.0"
+	})
+	if a := find(s, "demo"); a.Job != nil {
+		t.Fatalf("new release: job %+v, want the stale failure gone", a.Job)
+	}
+}
+
 func TestInstallRefusesBadChecksum(t *testing.T) {
 	f := newFakeRelease(t)
 	m := &Manifest{Schema: 1, Apps: map[string]Entry{}}
