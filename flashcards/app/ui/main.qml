@@ -48,6 +48,7 @@ Rectangle {
     property var shown: null         // the card message (102) being shown
     property bool revealed: false
     property bool answering: false
+    property double cardAt: 0        // when the card arrived (ms), for reveal()
     property int newPerDay: -1       // the options screen's value, until saved
     property var stats: null         // the statistics (103) being shown
     property bool statsWhole: false  // the whole collection's, not the deck's
@@ -119,6 +120,13 @@ Rectangle {
         answering = true;
         send(3, { deck: deckId, card: shown.card.id, rating: rating });
     }
+    // A second tap of a quick double tap on an answer lands on Show Answer,
+    // where Good was: ignore Show Answer just after a card arrives.
+    function reveal() {
+        if (Date.now() - cardAt < 700)
+            return;
+        revealed = true;
+    }
     function openOptions() {
         newPerDay = deck ? deck.newPerDay : -1;
         screen = "options";
@@ -140,6 +148,7 @@ Rectangle {
         if (msg.deck !== deckId)
             return;
         shown = msg;
+        cardAt = Date.now();
         answering = false;
         revealed = false;
         if (msg.done && screen === "review") {
@@ -533,14 +542,27 @@ Rectangle {
 
         // Long cards (a word with its examples) shrink until they fit: no
         // scrolling on e-ink.
+        // The texts' own heights, not the Column's: the Column lays out
+        // only before the next frame, so it would still measure the last
+        // card, or the front without the newly shown answer.
         function fit() {
-            fontScale = 1;
             Qt.callLater(shrink);
         }
+        function needed() {
+            var h = frontText.implicitHeight;
+            if (root.revealed) {
+                h += answerRule.height + backText.implicitHeight;
+                if (card !== null && card.aux.trim() !== "")
+                    h += auxText.implicitHeight;
+            }
+            return h;
+        }
         function shrink() {
-            if (cardText.implicitHeight > cardArea.height - 80 && fontScale > 0.45) {
-                fontScale = fontScale * 0.85;
-                Qt.callLater(shrink);
+            var scale = 1;
+            fontScale = scale;
+            while (needed() > cardArea.height - 80 && scale > 0.45) {
+                scale = scale * 0.85;
+                fontScale = scale;
             }
         }
         onCardChanged: fit()
@@ -560,6 +582,7 @@ Rectangle {
                 y: 72
                 spacing: 0
                 Text {
+                    id: frontText
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
@@ -570,6 +593,7 @@ Rectangle {
                     font.pixelSize: Math.round(64 * reviewer.fontScale)
                 }
                 Item {
+                    id: answerRule
                     visible: root.revealed
                     width: parent.width
                     height: Math.round(80 * reviewer.fontScale)
@@ -581,6 +605,7 @@ Rectangle {
                     }
                 }
                 Text {
+                    id: backText
                     visible: root.revealed
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
@@ -592,6 +617,7 @@ Rectangle {
                     font.pixelSize: Math.round(64 * reviewer.fontScale)
                 }
                 Text {
+                    id: auxText
                     visible: root.revealed && reviewer.card !== null && reviewer.card.aux.trim() !== ""
                     width: parent.width
                     topPadding: Math.round(40 * reviewer.fontScale)
@@ -653,7 +679,7 @@ Rectangle {
                 fonts: fontSet
                 text: "Show Answer"
                 preferred: true
-                onClicked: root.revealed = true
+                onClicked: root.reveal()
             }
             Row {
                 visible: root.revealed
@@ -1133,7 +1159,8 @@ Rectangle {
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: root.info && root.info.code ? root.info.code : "…"
+                // "…" only while a code is on its way, not under an error.
+                text: root.info && root.info.code ? root.info.code : root.info && root.info.pairErr !== "" ? "" : "…"
                 color: Theme.ink
                 font.family: fontSet.sansBold
                 font.weight: Font.Bold

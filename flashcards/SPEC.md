@@ -53,7 +53,8 @@ every 1.5 s).
   seconds (the backend polls every 3 s) and the deck list appears, with a
   sync started.
 - If the code expires: "The code expired." and a Try Again button, which
-  fetches a new code. Offline: "No connection." and Try Again. A short
+  fetches a new code. Offline: "No connection." and Try Again. While
+  either shows, the code line is empty. A short
   network blip while polling is ignored.
 - If the website unpairs the tablet, the next sync forgets the token and
   this screen comes back with a new code. The cards stay on the tablet.
@@ -102,7 +103,9 @@ every 1.5 s).
   (heavier outline), Easy, each under its interval as Anki writes it: "<1m",
   "10m", "3h", "4d", "1.5mo", "2.1y".
 - Tapping an answer shows the next card. Taps on the answer buttons are
-  ignored until it arrives (no double answers).
+  ignored until it arrives (no double answers), and Show Answer is
+  ignored for a moment after a card arrives, so the second tap of a
+  double tap on an answer doesn't show the next card's answer.
 - The order is Anki's: learning cards once due, then today's reviews with
   new cards spread evenly among them, then learning cards due within 20
   minutes; then the deck is finished and the app returns to the overview
