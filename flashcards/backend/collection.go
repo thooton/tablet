@@ -39,6 +39,8 @@ type card struct {
 	Intro int64 `json:"intro"`
 	Mod   int64 `json:"mod"`
 	Dirty bool  `json:"dirty,omitempty"`
+	// Removed from its deck on the phone: dropped at once (index).
+	Deleted bool `json:"deleted,omitempty"`
 
 	javaID int32 // the java-fsrs card id: String.hashCode of ID
 }
@@ -90,7 +92,7 @@ func (c *collection) index() {
 		c.decks[d.ID] = d
 	}
 	for _, k := range c.Cards {
-		if c.decks[k.Deck] == nil || c.cards[k.ID] != nil {
+		if c.decks[k.Deck] == nil || c.cards[k.ID] != nil || k.Deleted {
 			continue
 		}
 		k.javaID = javaStringHash(k.ID)
@@ -238,7 +240,12 @@ func (c *collection) apply(reply []byte, sent sentMods) error {
 		}
 		k.Dirty = false
 		have := c.cards[k.ID]
-		if have == nil {
+		if k.Deleted {
+			// Removal wins over an answer here, as on the command center.
+			if have != nil {
+				have.Deleted = true
+			}
+		} else if have == nil {
 			c.Cards = append(c.Cards, k)
 		} else if !(have.Dirty && have.Mod > k.Mod) {
 			*have = *k

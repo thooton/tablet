@@ -13,7 +13,9 @@ studies from it offline, and syncs when the app opens (if the last sync is
 over a minute old), 20 seconds after the last answer, after an options
 change, when the app closes, and from Sync in the toolbar. Each record
 carries `mod` (device milliseconds) and the collection a `usn`; where the
-phone and the tablet both changed a card, the later answer wins.
+phone and the tablet both changed a card, the later answer wins. A card removed on the phone (Menu > Remove from deck) comes back from
+the command center with `deleted` set, and the tablet drops it, even if
+it answered the card meanwhile.
 
 **Pairing.** The tablet can't type the delta token, so it pairs: unpaired,
 the backend asks `POST /flashcards/pair` for a code and the app shows it;

@@ -267,3 +267,20 @@ func TestReviewAhead(t *testing.T) {
 		t.Fatalf("second: %+v", second)
 	}
 }
+
+func TestSyncDropsRemovedCards(t *testing.T) {
+	c := testCollection(2, auto)
+	s := &session{c: c, deck: c.Decks[0]}
+	s.next(noon)
+	s.rate(good, noon)
+	_, sent := c.outgoing()
+	answered := *c.inDeck["d"][0]
+	answered.Deleted, answered.Dirty = true, false
+	reply, _ := json.Marshal(map[string]any{"usn": 6, "decks": []any{}, "cards": []any{&answered}})
+	if err := c.apply(reply, sent); err != nil {
+		t.Fatal(err)
+	}
+	if c.cards[answered.ID] != nil || len(c.inDeck["d"]) != 1 || len(c.Cards) != 1 || c.dirty() {
+		t.Fatalf("the removed card stayed: %d in the deck, %d kept", len(c.inDeck["d"]), len(c.Cards))
+	}
+}
