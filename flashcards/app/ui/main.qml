@@ -655,7 +655,6 @@ Rectangle {
                             fonts: fontSet
                             text: modelData
                             preferred: index === 2
-                            enabled: !root.answering
                             onClicked: root.answer(index + 1)
                         }
                     }
