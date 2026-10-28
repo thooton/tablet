@@ -5,14 +5,14 @@ import "js/theme.js" as Theme
 
 // Flashcards: Anki's desktop window on the reMarkable, in black and white.
 // Its toolbar (←, where the user is, Sync), the deck list, a deck's overview with Study
-// Now, the reviewer, and the deck's options; and, until the tablet is
+// Now, the reviewer, the deck's options and its statistics; and, until the tablet is
 // paired with the command center, the pairing code. Where Anki tells the
 // queues apart by colour, a shape does: New a triangle, Learning a square,
 // To Review a circle.
 //
 // The backend (backend/) keeps the cards, schedules them and syncs them;
 // this draws what it sends: the decks and how sync stands (101) and the
-// card to show (102).
+// card to show (102), and the statistics (103).
 Rectangle {
     id: root
     anchors.fill: parent
@@ -43,12 +43,14 @@ Rectangle {
     FontLoader { id: sansBoldFile; source: "fonts/IBMPlexSans-Bold.ttf" }
 
     property var info: null          // the backend's state (101)
-    property string screen: "decks"  // decks, overview, review, options
+    property string screen: "decks"  // decks, overview, review, options, stats
     property string deckId: ""
     property var shown: null         // the card message (102) being shown
     property bool revealed: false
     property bool answering: false
     property int newPerDay: -1       // the options screen's value, until saved
+    property var stats: null         // the statistics (103) being shown
+    property bool statsWhole: false  // the whole collection's, not the deck's
 
     readonly property var decks: info ? info.decks : []
     readonly property var deck: {
@@ -73,6 +75,8 @@ Rectangle {
                 root.info = msg;
             else if (type === 102)
                 root.took(msg);
+            else if (type === 103 && msg.deck === root.deckId && msg.whole === root.statsWhole)
+                root.stats = msg;
         }
     }
 
@@ -119,6 +123,13 @@ Rectangle {
         newPerDay = deck ? deck.newPerDay : -1;
         screen = "options";
     }
+    function openStats(whole) {
+        if (screen !== "stats")
+            stats = null;
+        statsWhole = whole === true;
+        screen = "stats";
+        send(7, { deck: deckId, whole: statsWhole });
+    }
     function saveOptions() {
         send(4, { deck: deckId, new_per_day: newPerDay });
         screen = "overview";
@@ -152,7 +163,7 @@ Rectangle {
     // One step up: the reviewer and the options to the deck's overview, the
     // overview to the decks, the decks out of the app.
     function back() {
-        if (screen === "review" || screen === "options") {
+        if (screen === "review" || screen === "options" || screen === "stats") {
             screen = "overview";
             send(1);
             send(2, { deck: deckId });
@@ -185,6 +196,7 @@ Rectangle {
             text: root.screen === "decks" ? "Flashcards"
                 : root.screen === "overview" ? "Overview"
                 : root.screen === "options" ? "Options"
+                : root.screen === "stats" ? "Statistics"
                 : (root.deck ? root.deck.name : "")
             elide: Text.ElideRight
             color: Theme.ink
@@ -480,11 +492,21 @@ Rectangle {
             }
         }
         BottomBar {
-            AnkiButton {
+            Row {
                 anchors.centerIn: parent
-                fonts: fontSet
-                text: "Options"
-                onClicked: root.openOptions()
+                spacing: 40
+                AnkiButton {
+                    width: 300
+                    fonts: fontSet
+                    text: "Options"
+                    onClicked: root.openOptions()
+                }
+                AnkiButton {
+                    width: 300
+                    fonts: fontSet
+                    text: "Stats"
+                    onClicked: root.openStats(false)
+                }
             }
         }
     }
@@ -806,6 +828,281 @@ Rectangle {
         fonts: fontSet
         textSize: 42
         onClicked: root.newPerDay = Math.max(0, Math.min(9999, root.newPerDay + by))
+    }
+
+    // ---- a deck's statistics: Anki's Statistics window, its graphs each on
+    // a card under its name, cut to what the cards' state can tell
+    Item {
+        id: statsPage
+        visible: root.paired && root.screen === "stats"
+        anchors.fill: parent
+        anchors.topMargin: Theme.toolbarHeight
+
+        readonly property var s: root.stats
+        readonly property real inner: width - 2 * Theme.margin
+
+        function plural(n, one, many) {
+            return n + " " + (n === 1 ? one : many);
+        }
+
+        Column {
+            visible: statsPage.s !== null
+            x: Theme.margin
+            width: statsPage.inner
+            topPadding: 14
+            spacing: 18
+
+            // Anki's search bar: the deck, or the whole collection.
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 80
+                Radio {
+                    text: root.deck ? root.deck.name : ""
+                    on: !root.statsWhole
+                    onClicked: root.openStats(false)
+                }
+                Radio {
+                    text: "Collection"
+                    on: root.statsWhole
+                    onClicked: root.openStats(true)
+                }
+            }
+
+            StatCard {
+                title: "Today"
+                Fact {
+                    text: !statsPage.s ? ""
+                        : statsPage.s.studied === 0 ? "No cards have been studied today."
+                        : "Studied " + statsPage.plural(statsPage.s.studied, "card", "cards") + " today."
+                }
+                Fact {
+                    visible: statsPage.s !== null && statsPage.s.studied > 0
+                    color: Theme.subtle
+                    text: statsPage.s ? "New: " + statsPage.s.introduced + "  |  Review: " + (statsPage.s.studied - statsPage.s.introduced) : ""
+                }
+            }
+
+            StatCard {
+                title: "Future Due"
+                Bars {
+                    width: parent.width
+                    height: 210
+                    fonts: fontSet
+                    values: statsPage.s ? statsPage.s.due : []
+                    labels: ["0", null, null, null, null, "5", null, null, null, null, "10", null, null, null, null,
+                        "15", null, null, null, null, "20", null, null, null, null, "25", null, null, null, null]
+                }
+                Fact {
+                    text: statsPage.s ? "Due today: " + statsPage.plural(statsPage.s.due[0], "review", "reviews")
+                        + "  |  Due tomorrow: " + statsPage.plural(statsPage.s.due[1], "review", "reviews") : ""
+                }
+                Fact {
+                    text: statsPage.s ? "Average: " + statsPage.s.dueAverage + " reviews/day  |  Total: "
+                        + statsPage.plural(statsPage.s.dueTotal, "review", "reviews") : ""
+                }
+            }
+
+            StatCard {
+                title: "Card Counts"
+                Row {
+                    width: parent.width
+                    spacing: 70
+                    Pie {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 310
+                        height: 310
+                        counts: statsPage.s ? statsPage.s.counts : []
+                    }
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 310 - 70
+                        spacing: 6
+                        Repeater {
+                            model: statsPage.s ? statsPage.s.countNames.length : 0
+                            CountRow {
+                                kind: index
+                                name: statsPage.s.countNames[index]
+                                count: statsPage.s.counts[index]
+                                share: statsPage.s.percents[index]
+                            }
+                        }
+                        CountRow {
+                            kind: -1
+                            name: "Total"
+                            count: statsPage.s ? statsPage.s.total : 0
+                        }
+                    }
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: 22
+                StatCard {
+                    width: (parent.width - 22) / 2
+                    title: "Review Intervals"
+                    Bars {
+                        width: parent.width
+                        height: 180
+                        fonts: fontSet
+                        textSize: 24
+                        values: statsPage.s ? statsPage.s.intervals : []
+                        labels: statsPage.s ? statsPage.s.intervalLabels : []
+                    }
+                    Fact {
+                        textSize: 32
+                        text: statsPage.s ? "Average: " + statsPage.s.averageInterval : ""
+                    }
+                    Fact {
+                        textSize: 32
+                        text: statsPage.s ? "Longest: " + statsPage.s.longestInterval : ""
+                    }
+                }
+                StatCard {
+                    width: (parent.width - 22) / 2
+                    title: "Card Retrievability"
+                    Bars {
+                        width: parent.width
+                        height: 180
+                        fonts: fontSet
+                        textSize: 24
+                        values: statsPage.s ? statsPage.s.recall : []
+                        labels: ["0%", null, null, null, null, "50%", null, null, null, null, "100%"]
+                    }
+                    Fact {
+                        textSize: 32
+                        text: statsPage.s ? "Average: " + statsPage.s.averageRecall : ""
+                    }
+                    Fact {
+                        textSize: 32
+                        text: statsPage.s ? "Total knowledge: " + statsPage.plural(statsPage.s.knowledge, "card", "cards") : ""
+                    }
+                }
+            }
+        }
+    }
+    // A graph's card: white, outlined, its name centred over what it shows.
+    component StatCard: Rectangle {
+        property string title
+        default property alias content: body.data
+        width: parent ? parent.width : 0
+        height: body.height + 2 * 24
+        radius: 16
+        border.width: 2
+        border.color: Theme.rule
+        Column {
+            id: body
+            x: 40
+            y: 24
+            width: parent.width - 80
+            spacing: 12
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: parent.parent.title
+                color: Theme.ink
+                font.family: fontSet.sansSemi
+                font.weight: Font.DemiBold
+                font.pixelSize: 40
+            }
+        }
+    }
+    component Fact: Text {
+        property int textSize: 34
+        width: parent ? parent.width : 0
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
+        color: Theme.ink
+        font.family: fontSet.sans
+        font.pixelSize: textSize
+    }
+    // Card Counts' table: the fill, the name, the count, the share.
+    component CountRow: Item {
+        property int kind: 0
+        property string name
+        property int count: 0
+        property string share: ""
+        width: parent ? parent.width : 0
+        height: 52
+        Hatch {
+            visible: parent.kind >= 0
+            kind: Math.max(0, parent.kind)
+            width: 44
+            height: 44
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Text {
+            x: 72
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.name
+            color: Theme.ink
+            font.family: parent.kind < 0 ? fontSet.sansSemi : fontSet.sans
+            font.weight: parent.kind < 0 ? Font.DemiBold : Font.Normal
+            font.pixelSize: 36
+        }
+        Text {
+            anchors.right: parent.right
+            anchors.rightMargin: 170
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.count
+            color: Theme.ink
+            font.family: parent.kind < 0 ? fontSet.sansSemi : fontSet.sansMedium
+            font.weight: parent.kind < 0 ? Font.DemiBold : Font.Medium
+            font.pixelSize: 36
+        }
+        Text {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.share
+            color: Theme.subtle
+            font.family: fontSet.sans
+            font.pixelSize: 36
+        }
+    }
+    // Anki's radio button: a ring, with a dot in the one chosen.
+    component Radio: Item {
+        id: radio
+        property string text
+        property bool on: false
+        signal clicked
+        width: radioRow.width
+        height: 80
+        Row {
+            id: radioRow
+            height: parent.height
+            spacing: 18
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 40
+                height: 40
+                radius: 20
+                border.width: 3
+                border.color: Theme.ink
+                Rectangle {
+                    visible: radio.on
+                    anchors.centerIn: parent
+                    width: 20
+                    height: 20
+                    radius: 10
+                    color: Theme.ink
+                }
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(implicitWidth, 520)
+                text: radio.text
+                elide: Text.ElideRight
+                color: Theme.ink
+                font.family: radio.on ? fontSet.sansMedium : fontSet.sans
+                font.weight: radio.on ? Font.Medium : Font.Normal
+                font.pixelSize: 38
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            anchors.margins: -20
+            onClicked: radio.clicked()
+        }
     }
 
     // ---- pairing: the code to type on the website's Tablet page

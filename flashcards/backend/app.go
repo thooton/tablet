@@ -18,9 +18,11 @@ const (
 	msgOptions = 4 // {"deck", "new_per_day"}: change a deck's setting
 	msgSync    = 5 // sync now
 	msgPair    = 6 // ask the command center for a pairing code
+	msgStats   = 7 // {"deck", "whole"?}: the deck's statistics, or the collection's
 
 	msgState = 101 // backend → UI: the decks and how sync stands
 	msgCard  = 102 // the card to show, or that the deck is done for now
+	msgStat  = 103 // the statistics
 )
 
 const (
@@ -64,6 +66,7 @@ func (a *app) handle(msgType int32, body []byte) {
 		Card      string `json:"card"`
 		Rating    int    `json:"rating"`
 		Ahead     bool   `json:"ahead"`
+		Whole     bool   `json:"whole"`
 		NewPerDay *int   `json:"new_per_day"`
 	}
 	if len(body) > 0 {
@@ -101,6 +104,8 @@ func (a *app) handle(msgType int32, body []byte) {
 		go a.sync()
 	case msgPair:
 		go a.startPairing()
+	case msgStats:
+		a.sendStats(in.Deck, in.Whole)
 	}
 }
 
@@ -355,6 +360,20 @@ func (a *app) sendState() {
 	}
 	a.mu.Unlock()
 	a.send(msgState, state)
+}
+
+// sendStats sends a deck's statistics, or with whole the collection's.
+func (a *app) sendStats(deckID string, whole bool) {
+	a.mu.Lock()
+	cards := a.col.Cards
+	if !whole {
+		cards = a.col.inDeck[deckID]
+	}
+	out := statsOf(cards, time.Now().Unix(), a.col.location()).message()
+	a.mu.Unlock()
+	out["deck"] = deckID
+	out["whole"] = whole
+	a.send(msgStat, out)
 }
 
 // studiedIn is whether the deck has a card ever answered, which Review

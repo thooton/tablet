@@ -46,7 +46,8 @@ not yet due, likeliest forgotten first (`session.earliest`, the phone's
 
 Anki's desktop window under one header: X on the deck list (it closes the
 app) or ← in a deck (up a level) on the left; the screen's name centred,
-semibold (Flashcards, Overview, the deck's name while studying, Options;
+semibold (Flashcards, Overview, the deck's name while studying, Options,
+Statistics;
 Overview because the overview names the deck large itself); Sync on the
 right, smaller;
 the deck table (Deck, New, Learn, Due) with "Studied N cards today." under
@@ -54,7 +55,15 @@ it; the overview (the deck's name, New / Learning / To Review, Study Now,
 Options in the bottom bar); the reviewer (the card centred, the answer
 under a rule, Anki's bottom bar with the counts over Show Answer, then
 Again Hard Good Easy, each under its interval); the options (a Daily
-Limits card, New cards/day as Auto or a number, Save). What Anki tells
+Limits card, New cards/day as Auto or a number, Save); the statistics
+(Stats beside Options: Anki's Statistics window on one screen, no
+scrolling: the deck or Collection as radio buttons, then Today, Future
+Due, Card Counts, Review Intervals and Card Retrievability, each on an
+outlined card under its name; `stats.go` is the phone's `algo/Stats`, and
+`TestStatsMatchThePhone` its test's numbers). Histograms are black bars
+(`components/Bars.qml`); Card Counts' pie (`components/Pie.qml`) tells its
+kinds apart as old DOS charts did, by fill (`js/hatch.js`): New dots,
+Learning `+`, Relearning `x`, Young diagonal lines, Mature solid. What Anki tells
 apart by colour a shape does (`components/Mark.qml`): New a triangle,
 Learning a square, To Review a circle; a queue with nothing in it is
 faint; the current card's count is bold and underlined. Anki's blue focus
@@ -72,16 +81,19 @@ kept and its ends trimmed. Long cards shrink to fit; there is no scrolling. IBM 
 | 4 | | `{"deck", "new_per_day"}`: -1 for Auto, else a number |
 | 5 | | sync now |
 | 6 | | ask for a new pairing code |
+| 7 | | `{"deck", "whole"?}`: send the deck's statistics, or with `whole` the collection's |
 | 101 | backend → UI | the state: `decks` (`id`, `name`, `newPerDay`, `counts`), `studied`, `paired`, `host`, `syncing`, `error`, `code`, `pairing`, `pairErr` |
 | 102 | | `{"deck", "name", "counts", "queue", "card": {"id", "front", "back", "aux", "intervals"}}`, or `{"deck", "counts", "done": true, "nextMinutes"?, "recheck"?}`; each also `ahead` and `studied` (whether Review Ahead has anything) |
+| 103 | | the statistics: `deck`, `whole`, `total`, `studied`, `introduced`, `countNames`, `counts`, `percents`, `due` (30 days from today), `dueTotal`, `dueAverage`, `intervals`, `intervalLabels`, `averageInterval`, `longestInterval`, `recall` (10 bins), `averageRecall`, `knowledge` |
 
 ## Layout
 
 - `backend/`: `fsrs.go`, `session.go`, `collection.go` (the copy and its
-  merge), `center.go` (sync and pairing), `app.go` (the messages),
+  merge), `center.go` (sync and pairing), `stats.go` (the statistics),
+  `app.go` (the messages),
   `main.go`; `transport.go` and `lifecycle.go` are the Updater's.
 - `app/ui/`: `main.qml` (every screen), `components/` (`AnkiButton`,
-  `Mark`), `js/theme.js`.
+  `Mark`, `Bars`, `Pie`, `Hatch`), `js/theme.js`, `js/hatch.js`.
 - `package/`, `tools/build.py`, the icon comes from the repository's `tools/make_icons.py` (Pillow).
 
 ## Testing
