@@ -10,9 +10,10 @@ import (
 )
 
 // testdata/java-fsrs.json is the phone's scheduler (ReviewSession.preview
-// in thooton/sonim's flashcards core) walking cards through random answers.
-// The tablet must give every answer the same state and the same due date,
-// fuzz included.
+// in thooton/sonim's flashcards core) walking cards through random answers,
+// at all hours in the phone's time zone (written by the core's
+// TabletVectors). The tablet must give every answer the same state and the
+// same due date, fuzz, Anki days and the rollover included.
 func TestReviewMatchesThePhone(t *testing.T) {
 	data, err := os.ReadFile("testdata/java-fsrs.json")
 	if err != nil {
@@ -20,6 +21,7 @@ func TestReviewMatchesThePhone(t *testing.T) {
 	}
 	var steps []struct {
 		ID      string
+		Zone    string
 		Now     int64
 		Rating  int
 		In, Out memory
@@ -31,7 +33,8 @@ func TestReviewMatchesThePhone(t *testing.T) {
 		t.Fatalf("only %d steps", len(steps))
 	}
 	for i, s := range steps {
-		got := review(s.In, javaStringHash(s.ID), s.Rating, s.Now)
+		sess := &session{c: &collection{Zone: s.Zone}}
+		got := sess.preview(s.In, javaStringHash(s.ID), s.Rating, s.Now)
 		want := s.Out
 		if got.State != want.State || got.Due != want.Due || got.Last != want.Last ||
 			!sameInt(got.Step, want.Step) || !sameFloat(got.Stability, want.Stability) || !sameFloat(got.Difficulty, want.Difficulty) {
@@ -72,6 +75,15 @@ func TestJavaHashes(t *testing.T) {
 	// new Random(42).nextDouble()
 	if got := newJavaRandom(42).nextDouble(); math.Abs(got-0.7275636800328681) > 1e-16 {
 		t.Fatalf("random: %v", got)
+	}
+}
+
+// round2 rounds as the script's +x.toFixed(2) does: the double's exact value.
+func TestRound2(t *testing.T) {
+	for in, want := range map[float64]float64{2.125: 2.13, 1.005: 1, 0.005000000000000001: 0.01, 39.215: 39.22, 1.2931: 1.29} {
+		if got := round2(in); got != want {
+			t.Errorf("round2(%v) = %v, want %v", in, got, want)
+		}
 	}
 }
 
@@ -247,7 +259,7 @@ func TestReviewAhead(t *testing.T) {
 	if first == later {
 		other = soon
 	}
-	if first == nil || retrievability(first.memory, noon) > retrievability(other.memory, noon) {
+	if first == nil || s.recall(first.memory, noon) > s.recall(other.memory, noon) {
 		t.Fatalf("not the likeliest forgotten first: %+v", first)
 	}
 	s.rate(good, noon)

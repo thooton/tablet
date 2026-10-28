@@ -90,7 +90,9 @@ func statsOf(cards []*card, now int64, loc *time.Location) stats {
 		if at < dueDays {
 			s.due[at]++
 		}
-		r := math.Max(0, math.Min(1, retrievability(k.memory, now)))
+		ly, lm, ld := time.Unix(k.Last, 0).In(loc).Add(-rolloverHour * time.Hour).Date()
+		elapsed := max(0, int64(time.Date(y, m, d, 0, 0, 0, 0, time.UTC).Sub(time.Date(ly, lm, ld, 0, 0, 0, 0, time.UTC))/(day*time.Second)))
+		r := math.Max(0, math.Min(1, retrievability(k.memory, elapsed)))
 		s.recall[min(recallBins-1, int(math.Floor(r*recallBins)))]++
 		s.knowledge += r
 	}

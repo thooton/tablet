@@ -24,18 +24,24 @@ only the flashcards) in `login.json` beside the collection. A 401 later
 center's address is `defaultServer` in `backend/center.go`
 (`FLASHCARDS_SERVER` overrides it, for the emulator).
 
-**Scheduling** is the phone's, ported: `backend/fsrs.go` is java-fsrs's
-`Scheduler` line for line (FSRS-6 defaults, steps 1m 10m and 10m, fuzz
-seeded with java.util.Random from the card's id and last review, as the
-phone seeds it), and `backend/session.go` is `ReviewSession` (learning,
+**Scheduling** is the phone's, ported: `backend/fsrs.go` is the phone's
+`algo/Fsrs` line for line, which is Anki with the FSRS4Anki scheduler on
+(fsrs4anki_scheduler.js v6.1.1, FSRS-6 defaults; Anki's steps 1m 10m and
+10m, up to 25%/5 minutes added to a step; recall from Anki days; stability
+and difficulty to two decimals; ±(5% + 1 day) fuzz drawn from
+java.util.Random seeded from the card's id and last review, as the phone
+seeds it), and `backend/session.go` is `ReviewSession` (learning,
 then today's reviews with new cards mixed in among them, then learn-ahead;
 new cards a number a day, or on AUTO enough to bring New + Learning + Due
 up to 20, which only decides when a new card comes in;
-`TestNewCardsMixIntoReviews` pins the order the phone gives). `testdata/java-fsrs.json`
-is 720 answers made by the phone's own scheduler, and
-`TestReviewMatchesThePhone` replays them: any change to the scheduling on
-either side must keep it passing (regenerate it from the phone's core when
-the phone's scheduler changes on purpose). The day rolls over at 4am in
+`TestNewCardsMixIntoReviews` pins the order the phone gives; `preview`
+counts the Anki days and the time to the rollover that `review` needs).
+`testdata/java-fsrs.json`
+is 1500 answers made by the phone's own scheduler at all hours in the
+phone's zone, and `TestReviewMatchesThePhone` replays them: any change to
+the scheduling on either side must keep it passing (regenerate it with the
+phone core's `TabletVectors` when the phone's scheduler changes on
+purpose). The day rolls over at 4am in
 the phone's time zone, which the phone syncs as `zone` (the tablet keeps
 UTC); `time/tzdata` is embedded since the tablet has no zoneinfo. Review
 Ahead (from a finished deck's congratulations) goes on to studied cards

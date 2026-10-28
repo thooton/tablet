@@ -154,7 +154,7 @@ func (a *app) sendCard(deckID string, fresh bool) {
 		}
 		var ivls [4]string
 		for r := again; r <= easy; r++ {
-			ivls[r-1] = interval(review(k.memory, k.javaID, r, now).Due - now)
+			ivls[r-1] = interval(s.preview(k.memory, k.javaID, r, now).Due - now)
 		}
 		out["queue"] = queue
 		out["card"] = map[string]any{"id": k.ID, "front": k.Front, "back": k.Back, "aux": k.Aux, "intervals": ivls}

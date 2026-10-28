@@ -37,6 +37,37 @@ type session struct {
 
 func (s *session) cards() []*card { return s.c.inDeck[s.deck.ID] }
 
+// preview is what rating r would make of card m (java-fsrs id cardID) at
+// now, as ReviewSession.preview on the phone: Anki days and the rollover
+// counted in the phone's time zone.
+func (s *session) preview(m memory, cardID int32, r int, now int64) memory {
+	last := m.Last
+	if last == 0 {
+		last = now
+	}
+	now = max(now, last)
+	return review(m, cardID, r, now, s.daysSince(last, now), s.dayEnd(now)-now)
+}
+
+// recall is the probability card m is recalled at now (0 when unseen).
+func (s *session) recall(m memory, now int64) float64 {
+	if m.Last == 0 {
+		return 0
+	}
+	return retrievability(m, s.daysSince(m.Last, now))
+}
+
+// daysSince is the Anki days from then to now: how many 4am rollovers lie between.
+func (s *session) daysSince(then, now int64) int64 {
+	return max(0, s.day(now)-s.day(then))
+}
+
+// day is the Anki day t falls in, as days since 1970-01-01.
+func (s *session) day(t int64) int64 {
+	y, m, d := time.Unix(t, 0).In(s.c.location()).Add(-rolloverHour * time.Hour).Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC).Unix() / day
+}
+
 // dayEnd is the end of the Anki day now falls in: days run 4am to 4am.
 func (s *session) dayEnd(now int64) int64 {
 	loc := s.c.location()
@@ -105,7 +136,7 @@ func (s *session) earliest(now int64) *card {
 		if k.isNew() || k == s.last {
 			continue
 		}
-		r := retrievability(k.memory, now)
+		r := s.recall(k.memory, now)
 		if best == nil || r < bestRecall || r == bestRecall && k.Due < best.Due {
 			best, bestRecall = k, r
 		}
@@ -125,7 +156,7 @@ func (s *session) rate(rating int, now int64) {
 	} else if !k.learning() {
 		s.reviewsShown++
 	}
-	k.memory = review(k.memory, k.javaID, rating, now)
+	k.memory = s.preview(k.memory, k.javaID, rating, now)
 	touch(&k.Mod, &k.Dirty, now*1000)
 	s.last = k
 	s.current = nil
