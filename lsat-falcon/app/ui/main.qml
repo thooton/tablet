@@ -32,6 +32,7 @@ Rectangle {
     property string view: "loading"     // loading | drill | practice
     property var saved: null             // {settings, position}
     property string errorText: ""
+    property string loadError: ""        // why the deck can't be loaded yet
     property int attempts: 0
     property bool creditsOpen: false
 
@@ -76,6 +77,7 @@ Rectangle {
         switch (type) {
         case 100:
             saved = data;
+            loadError = "";
             break;
         case 101:
             if (Deck.ready)
@@ -90,6 +92,12 @@ Rectangle {
             questionStore.put(data);
             break;
         case 199:
+            // Hello fails only when the deck can't be loaded: say so on the
+            // Loading screen and keep trying.
+            if (data.request === 1 && root.view === "loading") {
+                loadError = data.message || "";
+                break;
+            }
             if (data.request === 2)
                 questionStore.failed(data);
             errorText = data.message || "Something went wrong.";
@@ -144,7 +152,7 @@ Rectangle {
         interval: 1500
         repeat: true
         triggeredOnStart: true
-        running: root.saved === null && root.errorText === ""
+        running: root.saved === null
         onTriggered: {
             root.attempts++;
             root.send(1);
@@ -176,9 +184,11 @@ Rectangle {
     Splash {
         anchors.fill: parent
         visible: root.view === "loading"
-        message: root.attempts > 6 && root.saved === null
+        message: root.loadError !== "" ? root.loadError
+                 : root.attempts > 6 && root.saved === null
                  ? "LSAT Falcon's question service isn't answering. Close the app and open it again. If that doesn't help, run /home/root/lsat-falcon/install.sh again."
                  : ""
+        onClose: root.close()
     }
 
     CreditsDialog {

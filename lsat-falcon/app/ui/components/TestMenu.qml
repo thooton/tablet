@@ -123,6 +123,12 @@ Rectangle {
         y: head.height
         width: parent.width
         height: Math.min(body.height, (parent.height - y) * 0.62)
+        // Where the shown part ends: under the last whole row, so no row is
+        // left cut in half at the rule.
+        readonly property real shown: {
+            contentY;
+            return maxY > 0 ? lineTop(contentY + height) - contentY : height;
+        }
 
         // Section
         Item {
@@ -352,15 +358,23 @@ Rectangle {
 
     }
 
+    Rectangle {
+        y: pager.y + pager.shown
+        width: parent.width
+        height: pager.height - pager.shown
+        color: Theme.surface
+        MouseArea { anchors.fill: parent }
+    }
+
     Rule {
         visible: pager.maxY > 0
-        y: pager.y + pager.height - height
+        y: pager.y + pager.shown - height
         z: 1
     }
 
     Pager {
         id: list
-        y: pager.y + pager.height
+        y: pager.y + pager.shown
         width: parent.width
         height: parent.height - y
 

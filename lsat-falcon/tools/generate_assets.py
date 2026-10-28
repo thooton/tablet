@@ -176,9 +176,14 @@ SIZES = {
     "falcon": [26, 38, 84],
     **{name: [17] for name in GLYPH},
 }
+# White versions for the buttons that turn black while on (strike, bookmark,
+# Settings); Icon.qml users ask for them as "<name>-white".
+WHITE = ["strike-a", "bookmark-filled", "settings"]
 
 
 def svg_for(name: str) -> str:
+    if name.endswith("-white"):
+        return svg_for(name[:-len("-white")]).replace('"#000"', '"#fff"')
     if name == "falcon":
         return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#000">{FALCON}</svg>'
     if name in GLYPH:
@@ -213,6 +218,8 @@ def images() -> None:
         for css in sizes:
             pixels = px(css)
             render(svg_for(name), pixels, out / f"{name}-{pixels}.png")
+            if name in WHITE:
+                render(svg_for(name + "-white"), pixels, out / f"{name}-white-{pixels}.png")
     # Launcher icon: the falcon on white, as AppLoad shows it in its list.
     falcon = svg_for("falcon").replace('viewBox="0 0 512 512"', 'viewBox="-64 -64 640 640"')
     render(falcon, 128, ROOT / "app" / "icon.png", background="#ffffff")

@@ -2,11 +2,23 @@ import QtQuick
 import "../js/theme.js" as Theme
 
 // index.html's splash: the falcon over the twelve-spoke throbber, shown
-// while the deck loads. E-ink gets it standing still.
+// while the deck loads. E-ink gets it standing still. The X closes the app,
+// so a deck that never loads isn't a dead end.
 Rectangle {
     id: splash
     property string message: ""
+    signal close
     color: Theme.surface
+
+    MouseArea { anchors.fill: parent }
+
+    IconButton {
+        objectName: "splashClose"
+        x: parent.width - Theme.px(12) - width
+        y: Theme.px(10)
+        icon: "close"
+        onClicked: splash.close()
+    }
 
     Column {
         anchors.centerIn: parent

@@ -288,7 +288,7 @@ Item {
 
     Header {
         id: header
-        title: drill.qi >= 0 ? Deck.titleFor(drill.qi) : Deck.deckTitle
+        title: drill.qi >= 0 ? Deck.titleFor(drill.qi) : Deck.appTitle
         IconButton {
             icon: "info"
             onClicked: drill.info()

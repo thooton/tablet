@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -85,6 +87,23 @@ func (a *App) load() error {
 	return err
 }
 
+// reason is a load error in a few plain words: Go's wording, without the
+// full path, which means nothing on the tablet's screen.
+func reason(err error) string {
+	var pathErr *fs.PathError
+	if errors.As(err, &pathErr) {
+		name := filepath.Base(pathErr.Path)
+		if errors.Is(err, fs.ErrNotExist) {
+			return name + " is missing"
+		}
+		if errors.Is(err, fs.ErrPermission) {
+			return name + " can't be read"
+		}
+		return name + ": " + pathErr.Err.Error()
+	}
+	return err.Error()
+}
+
 func (a *App) read(span [2]int64) (json.RawMessage, error) {
 	buf := make([]byte, span[1])
 	if _, err := a.content.ReadAt(buf, span[0]); err != nil {
@@ -131,7 +150,12 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 	switch msgType {
 	case reqHello:
 		if a.loadErr != nil {
-			return []reply{errorReply(msgType, "The question deck could not be loaded: "+a.loadErr.Error())}
+			// The frontend keeps saying hello while it waits, so a deck
+			// that turns up (an install finishing) is picked up.
+			a.loadErr = a.load()
+		}
+		if a.loadErr != nil {
+			return []reply{errorReply(msgType, "The question deck could not be loaded: "+reason(a.loadErr)+".")}
 		}
 		return []reply{
 			{respState, map[string]any{"settings": a.state.Settings, "position": a.state.Position}},

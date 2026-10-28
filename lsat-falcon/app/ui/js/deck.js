@@ -72,10 +72,14 @@ function isRC(i) {
     return groupOf(i).isRC;
 }
 
+// The app's name stands in for a test label: meta.json's deck title is a
+// count ("6461 Questions") that matches nothing on screen.
+var appTitle = "LSAT Falcon";
+
 function titleFor(i) {
     var q = questions[i];
     if (!q || q.test === null)
-        return deckTitle;
+        return appTitle;
     return testLabels[q.test] || ("Test " + q.test);
 }
 

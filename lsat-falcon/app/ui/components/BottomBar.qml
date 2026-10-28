@@ -99,7 +99,7 @@ Item {
         PillButton {
             objectName: "mainButton"
             anchors.verticalCenter: parent.verticalCenter
-            kind: bar.readingPassage || bar.revealed ? "primary" : "secondary"
+            kind: bar.readingPassage || bar.revealed ? "primary" : "outline"
             text: bar.readingPassage ? "Continue" : bar.revealed ? (bar.isLast ? "Finish" : "Continue") : "Skip"
             onClicked: bar.readingPassage || bar.revealed ? bar.next() : bar.skip()
         }

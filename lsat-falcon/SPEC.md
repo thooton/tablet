@@ -1,7 +1,7 @@
 # Lsat-falcon
 
 LSAT Falcon (AppLoad id `lsat-falcon`, directory `lsat-falcon/`), version
-1.0.2 when this was written.
+1.0.3 when this was last updated.
 
 ## Purpose
 
@@ -40,28 +40,34 @@ clock once a minute.
 Sizes below are CSS px (x 2.25 on screen). Panes that are taller than the
 screen page: a vertical swipe of more than 30 px (more vertical than
 horizontal) shows the next screenful (swipe up) or the previous one (swipe
-down), keeping the last 32 px of the previous page at the top. At the top a
+down), keeping the last 32 px of the previous page at the top. No page
+starts on half a line or half a row: it backs up to show it whole, or on
+the last page starts just after it; the same goes for paging to the
+question or to a quoted phrase. At the top a
 swipe down stays; at the bottom a swipe up stays. A thin grey thumb on the
 right shows the place, only when the pane pages. Sideways swipes do nothing.
 Anything shorter than 30 px of movement is a tap.
 
 ### Loading
 
-The falcon over a still twelve-spoke throbber. The app says hello to the
-backend every 1.5 s until it answers. After about 9 s with no answer:
-"LSAT Falcon's question service isn't answering." with what to do.
-Then it opens drilling.
+The falcon over a still twelve-spoke throbber, and an X at the top right
+that closes the app. The app says hello to the backend every 1.5 s until
+it answers. After about 9 s with no answer: "LSAT Falcon's question
+service isn't answering." with what to do. A deck that can't be loaded
+shows "The question deck could not be loaded: <reason>." under the
+throbber (the reason in a few words, e.g. "meta.json is missing"), and the
+backend tries loading it again on each hello. Then it opens drilling.
 
 ### Drilling
 
 Header (56 px, rule below): the falcon, the title (the current question's
-test label, e.g. its PrepTest; the deck title for questions without a
-test), elided if long, then four buttons: info, stopwatch, settings, close.
+test label, e.g. its PrepTest; "LSAT Falcon" for questions without a
+test and when nothing matches), elided if long, then four buttons: info, stopwatch, settings, close.
 
 - info opens Credits.
 - stopwatch clears the drill's answers, closes Settings and opens Practice
   test. Hidden when the deck has no exams.
-- settings opens or closes Settings (shown pressed while open).
+- settings opens or closes Settings (shown pressed, black, while open).
 - close closes the app.
 
 The body pages as one pane: the heading in grey ("Section 3, Question 9",
@@ -76,7 +82,7 @@ tool card at the choices' top right holding strike (struck A).
   type, number and difficulty. The tools move to a row of their own above
   the stem. The Explanation follows the choices: an introduction, then a
   note per letter, the credited letter in bold black, the others faint.
-- Strike turns strike mode on (button pressed): each choice shows a minus
+- Strike turns strike mode on (button pressed: black, white icon): each choice shows a minus
   at its right; tapping a choice or its minus strikes it out (grey,
   struck through) or back. Tapping strike again leaves the mode. Tapping
   a struck choice outside strike mode answers it and un-strikes it. Strike
@@ -93,7 +99,8 @@ finished:
 - When the question is part of a group (a reading passage, or several
   questions on one stimulus): tabs, P for the passage (RC only) then one
   per question in the deck with its printed number; the current one is
-  black. The tabs shift so the current one is always visible. Then ← and →,
+  black. The tabs shift so the current one is always visible, and only
+  whole tabs are shown. Then ← and →,
   which step through the group's tabs (← disabled on P, or on the first
   question when there is no P; → disabled on the last question).
 - The main button: on the passage, "Continue" (to the group's first
@@ -116,8 +123,8 @@ and test (not the held-out switch or shuffle).
 ### Settings
 
 Covers the whole screen. Heading "Settings" with an X (closes). The filters
-page on their own (up to 62% of the screen, a rule under them when they do),
-the deck outline pages below them.
+page on their own (up to 62% of the screen, ending under the last whole
+row, a rule under them when they do), the deck outline pages below them.
 
 - Section: Logical Reasoning, Reading Comprehension chips (toggle; both
   off means all), Clear at the right while any is on.
@@ -172,14 +179,15 @@ Section: the passage and question as in drilling, plus a bookmark tool, and
 under a passage "Passage questions" chips to jump between them. Answers can
 be changed freely; nothing is marked. Footer (68 px): "Back" (disabled on
 the first), the palette (one chip per question: current black, answered
-grey, others outlined, a dot on bookmarked ones; tap to jump), "Finish
+grey, others outlined, a dot on bookmarked ones; only whole chips shown;
+tap to jump), "Finish
 section" (hidden on the last question), "Next", which on the last question
 reads "Finish section" or, in the last section, "Finish test". Finishing
 with blanks asks "3 questions are unanswered. Finish section?" ("1 question
 is"). Finishing is final.
 
-Clock: timed counts down in whole minutes ("35 min" ... "1 min", then "<1
-min"); with 5 minutes or less left it gets a border and bold. At 35 minutes
+Clock: timed counts down in whole minutes, rounded up ("35 min" at the
+start ... "2 min", then "<1 min" in the last minute); with 5 minutes or less left it gets a border and bold. At 35 minutes
 the section ends by itself, without asking. Untimed counts up ("0 min",
 "1 min", ...) and never ends the section.
 
@@ -188,19 +196,20 @@ conversion chart when it has one, otherwise a curve), correct and incorrect
 counts, then "61 of 75 right (81%)  |  2 left blank (counted wrong)  |
 timed  |  1h 52m". Experimental sections are left out of the score.
 "By section" (experimental ones marked "(experimental)") and "By question
-type" (most questions first), right out of total. Buttons "Review answers",
+type" (most questions first), right out of total; a type both sections
+have says which ("Weaken (LR)", "Weaken (RC)"). Buttons "Review answers",
 "Another test" (back to setup), "Back to drilling".
 
 Review: every question of the test, experimental too, answered and with its
 explanation. Footer: "Score report" (back to results), one bar per question
-(filled if right, open if wrong, the current one outlined; tap to jump),
+(filled black if right, open if wrong, the current one outlined; tap to jump),
 "Back" and "Next", disabled at the ends.
 
 ### Messages
 
 A backend error shows a bordered box with the message and "OK"; OK or a tap
-anywhere closes it. A deck that can't be loaded shows "The question deck
-could not be loaded: <reason>." and loading carries on retrying.
+anywhere closes it. (A deck that can't be loaded is said on the Loading
+screen instead.)
 
 ## Behaviour
 
@@ -226,8 +235,9 @@ could not be loaded: <reason>." and loading carries on retrying.
 From README.md and the root AGENTS.md: Falcon Roboto (reading text 36
 screen px on a 1.5 line, weight 400), → ← ↑ ↓ ≠ ✓ from Noto Sans Math,
 black on white, greys only for decoration (headings, hints, the share
-bars, the scrollbar thumb). Selected chips and the current tab are filled
-black with white text.
+bars, the scrollbar thumb). Selected chips, the current tab and pressed
+buttons (strike, bookmark, settings) are filled black with white text or
+icon.
 
 ## Open questions
 

@@ -85,12 +85,13 @@ Item {
         }
     }
 
-    // E-ink redraws for every change, so the clock shows whole minutes.
+    // E-ink redraws for every change, so the clock shows whole minutes:
+    // counting down they round up (35 min at the start, <1 min in the last).
     function clock(s) {
         s = Math.max(0, s);
         if (s < 60)
             return practice.timed ? "<1 min" : "0 min";
-        return Math.floor(s / 60) + " min";
+        return (practice.timed ? Math.ceil(s / 60) : Math.floor(s / 60)) + " min";
     }
 
     Rectangle {
@@ -312,13 +313,19 @@ Item {
                 for (var n = 0; n < scored.length; n++) {
                     var i = scored[n], cat = Deck.category(i);
                     if (!rows[cat.path]) {
-                        rows[cat.path] = { label: cat.label, right: 0, total: 0 };
+                        rows[cat.path] = { label: cat.label, section: cat.section, right: 0, total: 0 };
                         out.push(rows[cat.path]);
                     }
                     rows[cat.path].total++;
                     if (practice.answers[i] === Deck.questions[i].correct)
                         rows[cat.path].right++;
                 }
+                var seen = {};
+                for (var r = 0; r < out.length; r++)
+                    seen[out[r].label] = (seen[out[r].label] || 0) + 1;
+                for (r = 0; r < out.length; r++)
+                    if (seen[out[r].label] > 1)
+                        out[r].label += " (" + out[r].section + ")";
                 return out.sort(function (a, b) { return b.total - a.total; });
             }
             function duration(s) {
@@ -519,7 +526,6 @@ Item {
                                 width: Theme.px(10)
                                 height: Theme.px(24)
                                 radius: width / 2
-                                opacity: parent.here ? 1 : 0.55
                                 color: parent.isRight ? Theme.correct : Theme.surface
                                 border.width: parent.isRight ? 0 : Theme.lineWidth
                                 border.color: Theme.wrong

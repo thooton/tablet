@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -152,5 +153,18 @@ func TestRealDeck(t *testing.T) {
 		if len(data) > chunkSize*4 {
 			t.Fatalf("question %d is %d bytes", i, len(data))
 		}
+	}
+}
+
+func TestHelloRetriesAMissingDeck(t *testing.T) {
+	dir := t.TempDir()
+	a := newApp(dir, filepath.Join(t.TempDir(), "state.json"))
+	replies := a.handle(reqHello, []byte("{}"))
+	if len(replies) != 1 || replies[0].Type != respError {
+		t.Fatalf("hello without a deck: %+v", replies)
+	}
+	msg := fmt.Sprint(replies[0].Body)
+	if !strings.Contains(msg, "meta.json is missing") || strings.Contains(msg, dir) {
+		t.Fatalf("reason: %s", msg)
 	}
 }

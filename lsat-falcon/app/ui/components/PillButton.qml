@@ -3,8 +3,8 @@ import "../js/theme.js" as Theme
 
 // The rounded-full buttons: h-11 px-8 text-[15px] font-medium.
 //   primary   navy fill, white label (Continue, Start, Begin section)
-//   secondary chip fill (Skip)
-//   outline   a 1 px rule round it (Another test)
+//   secondary chip fill
+//   outline   a 1 px rule round it (Skip, Another test)
 //   ghost     just the label, ink-soft (Back, Finish section, End test)
 Pressable {
     id: btn
