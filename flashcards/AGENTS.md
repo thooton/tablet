@@ -45,7 +45,10 @@ not yet due, likeliest forgotten first (`session.earliest`, the phone's
 ## The look
 
 Anki's desktop window under one header: X on the deck list (it closes the
-app) or ← in a deck (up a level) on the left, Sync on the right, no title;
+app) or ← in a deck (up a level) on the left; the screen's name centred,
+semibold (Flashcards, Overview, the deck's name while studying, Options;
+Overview because the overview names the deck large itself); Sync on the
+right, smaller;
 the deck table (Deck, New, Learn, Due) with "Studied N cards today." under
 it; the overview (the deck's name, New / Learning / To Review, Study Now,
 Options in the bottom bar); the reviewer (the card centred, the answer

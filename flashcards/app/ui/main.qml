@@ -163,7 +163,8 @@ Rectangle {
     }
 
     // ---- toolbar: the way out on the left (X on the deck list, which closes
-    // the app; ← in a deck, up a level), Sync on the right
+    // the app; ← in a deck, up a level), the screen's name centred and the
+    // heaviest thing in the bar, Sync on the right, quieter
     Item {
         id: toolbar
         width: parent.width
@@ -174,6 +175,22 @@ Rectangle {
             icon: root.screen === "decks" ? "close" : "back"
             anchors.verticalCenter: parent.verticalCenter
             onClicked: root.back()
+        }
+        // The screen's name: the overview's own page names the deck, large,
+        // so the bar says Overview there rather than the name twice.
+        Text {
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width - 2 * (Theme.margin + sync.width + 32))
+            horizontalAlignment: Text.AlignHCenter
+            text: root.screen === "decks" ? "Flashcards"
+                : root.screen === "overview" ? "Overview"
+                : root.screen === "options" ? "Options"
+                : (root.deck ? root.deck.name : "")
+            elide: Text.ElideRight
+            color: Theme.ink
+            font.family: fontSet.sansSemi
+            font.weight: Font.DemiBold
+            font.pixelSize: 44
         }
         ToolLink {
             id: sync
@@ -220,7 +237,7 @@ Rectangle {
         color: Theme.ink
         font.family: current ? fontSet.sansSemi : fontSet.sans
         font.weight: current ? Font.DemiBold : Font.Normal
-        font.pixelSize: 38
+        font.pixelSize: 34
         MouseArea {
             anchors.fill: parent
             anchors.margins: -30
