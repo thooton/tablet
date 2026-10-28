@@ -11,6 +11,7 @@ Item {
     property int percent: -1         // 0..100 while downloading, else -1
     property QtObject fonts
     signal clicked
+    signal swiped(int direction)
 
     width: Theme.capsuleWidth
     height: Theme.capsuleHeight
@@ -22,34 +23,49 @@ Item {
         color: capsule.filled ? Theme.ink : Theme.paper
         border.width: 3
         border.color: Theme.ink
-        clip: true
 
-        Rectangle {
+        // The fill: a black capsule cut at the percentage, so both ends keep
+        // their round.
+        Item {
             visible: capsule.percent > 0
-            width: parent.width * Math.min(100, capsule.percent) / 100
+            width: Math.round(parent.width * Math.min(100, capsule.percent) / 100)
             height: parent.height
-            color: Theme.ink
+            clip: true
+            Rectangle {
+                width: shape.width
+                height: shape.height
+                radius: shape.radius
+                color: Theme.ink
+            }
         }
     }
+    // Over a part-filled bar the label sits in a white box so it reads
+    // whichever half it is on.
+    Rectangle {
+        visible: capsule.percent > 0
+        anchors.centerIn: parent
+        width: label.contentWidth + 28
+        height: label.contentHeight + 8
+        radius: height / 2
+        color: Theme.paper
+    }
     Text {
+        id: label
         anchors.fill: parent
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         text: capsule.text
-        // Over a part-filled bar the label sits in a white box so it reads
-        // whichever half it is on.
         color: capsule.filled ? Theme.paper : Theme.ink
         font.family: capsule.fonts.sansBold
         font.weight: Font.Bold
         font.pixelSize: 32
         font.letterSpacing: 32 * 0.06
-        style: capsule.percent > 0 ? Text.Outline : Text.Normal
-        styleColor: Theme.paper
     }
-    MouseArea {
+    TapArea {
         anchors.fill: parent
         anchors.margins: -16
         enabled: capsule.enabled
-        onClicked: capsule.clicked()
+        onTapped: capsule.clicked()
+        onSwiped: direction => capsule.swiped(direction)
     }
 }

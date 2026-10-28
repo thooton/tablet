@@ -80,6 +80,16 @@ Item {
                 font.pixelSize: 34
             }
             Text {
+                objectName: "notesProgress"
+                width: parent.width
+                visible: text !== ""
+                text: Format.progress(box.app)
+                color: Theme.ink
+                font.family: box.fonts.sansSemi
+                font.weight: Font.DemiBold
+                font.pixelSize: 32
+            }
+            Text {
                 width: parent.width
                 visible: box.app.job !== null && box.app.job.phase === "failed"
                 wrapMode: Text.Wrap

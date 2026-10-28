@@ -57,6 +57,19 @@ function capsule(app) {
     return null;
 }
 
+// Where a queued app is, for What's New: "Waiting", "Downloading (37%)",
+// "Installing", else "".
+function progress(app) {
+    var p = app.job ? app.job.phase : "";
+    if (p === "waiting")
+        return "Waiting";
+    if (p === "downloading")
+        return "Downloading (" + app.job.percent + "%)";
+    if (p === "installing")
+        return "Installing";
+    return "";
+}
+
 // The line under an app's name: the version, then the date of its newest
 // change (or, not installed, its size) in parentheses.
 function versionLine(app) {

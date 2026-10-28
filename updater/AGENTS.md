@@ -55,11 +55,11 @@ once.
 |---|---|---|
 | 1 | UI → backend | check for updates (ignored while one runs) |
 | 2 | | `{"apps": [dir, ...]}`: install them |
-| 3 | | send the state |
+| 3 | | send the state, checking first if the last check is over a minute old and nothing is installing (what the UI sends on opening) |
 | 4 | | `{"app": dir}`: take a waiting app out of the queue |
 | 101 | backend → UI | the whole state (`State` in `backend/app.go`), after every change |
 
-The backend also checks when a frontend attaches (-2), as above.
+The backend does the same when a frontend attaches (-2).
 
 ## Layout
 
@@ -71,7 +71,7 @@ The backend also checks when a frontend attaches (-2), as above.
   override `/home/root`, the AppLoad folder and the release URL, for tests
   and the emulator.
 - `app/ui/`: `main.qml` (header, notices, the paged list), `components/`
-  (`AppRow`, `Capsule`, `NotesBox`, `IconButton`), `js/format.js` (what
+  (`AppRow`, `Capsule`, `NotesBox`, `IconButton`, and `TapArea`, which tells taps from page swipes), `js/format.js` (what
   each row says), `js/theme.js`.
 - `package/`: install.sh, uninstall.sh, README.txt (also the first,
   by-hand install).

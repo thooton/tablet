@@ -83,7 +83,7 @@ INSTALLED).
 | Update available | UPDATE (black, white text) | queues it |
 | Not installed | GET (black) | queues it |
 | Queued | WAITING (outlined) | takes it out of the queue; the row goes back to UPDATE or GET |
-| Downloading | `37%` (outlined, filling black from the left) | opens What's New |
+| Downloading | `37%` (outlined, filling black from the left, the figure on a white patch) | opens What's New |
 | Unpacking and running install.sh | INSTALLING (outlined) | opens What's New |
 | Just installed | DONE (outlined) | opens What's New |
 | Last try failed | RETRY (black) | queues it again |
@@ -96,7 +96,8 @@ INSTALLED).
 - Tapping anywhere else on a row opens What's New for that app.
 
 **Paging**: the list is cut into pages that fit the screen; a group heading
-never ends a page. With more than one page, the bottom 120 px show
+never ends a page, and a page that goes on with a group starts with that
+group's heading again. With more than one page, the bottom 120 px show
 `‹     2 / 3     ›`: tapping the left half goes back a page, the right half
 forward. A sideways swipe of more than 110 px (more sideways than up or down)
 turns the page: right to left goes forward. On the first page back does
@@ -120,6 +121,8 @@ the sides and 200 px from the top, never taller than the screen less 400 px.
 - Top: the app's name (elided) and × on the right, over a black rule.
 - `Installed 1.0.3  |  Latest 1.0.4 (2.3 MB)`; when not installed, or
   installed with no version, just `Latest 1.0.4 (2.3 MB)`.
+- While the app is queued or installing, where it is, in semibold: `Waiting`,
+  `Downloading (37%)` (in the same steps as the capsule) or `Installing`.
 - If the last try failed: its error, in semibold, wrapped.
 - WHAT'S NEW, then the app's newest changes, newest first, at most six: each
   a date line ("24 Oct (1.0.4)", the version only when the change has one) and

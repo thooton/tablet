@@ -6,6 +6,7 @@
         <file>ui/components/Capsule.qml</file>
         <file>ui/components/IconButton.qml</file>
         <file>ui/components/NotesBox.qml</file>
+        <file>ui/components/TapArea.qml</file>
         <file>ui/js/format.js</file>
         <file>ui/js/theme.js</file>
         <file>ui/images/back.png</file>

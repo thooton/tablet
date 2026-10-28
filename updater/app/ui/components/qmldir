@@ -2,3 +2,4 @@ Capsule 1.0 Capsule.qml
 AppRow 1.0 AppRow.qml
 NotesBox 1.0 NotesBox.qml
 IconButton 1.0 IconButton.qml
+TapArea 1.0 TapArea.qml

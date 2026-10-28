@@ -16,7 +16,7 @@ import (
 const (
 	msgCheck   int32 = 1 // fetch manifest.json again
 	msgInstall int32 = 2 // {"apps": [dir, ...]}: queue them
-	msgState   int32 = 3 // just send the state
+	msgState   int32 = 3 // send the state, checking first if the last check is stale (opening)
 	msgCancel  int32 = 4 // {"app": dir}: take a waiting app out of the queue
 
 	msgStateReply int32 = 101

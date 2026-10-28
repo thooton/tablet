@@ -12,13 +12,15 @@ Item {
     signal install
     signal cancel
     signal details
+    signal swiped(int direction)
 
     height: Theme.rowHeight
     readonly property var capsuleState: Format.capsule(app)
 
-    MouseArea {
+    TapArea {
         anchors.fill: parent
-        onClicked: row.details()
+        onTapped: row.details()
+        onSwiped: direction => row.swiped(direction)
     }
 
     Rectangle {
@@ -102,6 +104,7 @@ Item {
         text: row.capsuleState ? row.capsuleState.text : ""
         filled: row.capsuleState ? row.capsuleState.filled : false
         percent: row.capsuleState ? row.capsuleState.percent : -1
+        onSwiped: direction => row.swiped(direction)
         onClicked: {
             if (!row.capsuleState)
                 return;

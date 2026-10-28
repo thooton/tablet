@@ -64,8 +64,9 @@ Rectangle {
     function cancel(dir) { send(4, { app: dir }); }
 
     // AppLoad may load the frontend before the backend has connected, so keep
-    // asking until the first answer arrives. Asking is a check for updates,
-    // which is what opening the Updater should do.
+    // asking until the first answer arrives. Asking for the state checks for
+    // updates unless the backend checked under a minute ago or is installing,
+    // so reopening right after an install keeps its DONE.
     Timer {
         interval: 1500
         repeat: true
@@ -73,7 +74,7 @@ Rectangle {
         running: root.info === null
         onTriggered: {
             root.attempts++;
-            root.check();
+            root.send(3);
         }
     }
 
@@ -93,10 +94,10 @@ Rectangle {
     }
     readonly property var updatable: apps.filter(a => a.status === "update" && !Format.active(a))
 
-    // The list as entries ({group} headings and {app} rows), cut into pages
-    // that fit the screen.
+    readonly property var titles: ["UPDATES", "NOT INSTALLED", "INSTALLED"]
+    // The list as entries ({heading} and {app} rows, each with its group), cut
+    // into pages that fit the screen.
     readonly property var entries: {
-        var titles = ["UPDATES", "NOT INSTALLED", "INSTALLED"];
         var out = [];
         for (var g = 0; g < 3; g++) {
             var members = apps.filter(a => group(a) === g);
@@ -104,7 +105,7 @@ Rectangle {
                 continue;
             out.push({ heading: titles[g], group: g });
             for (var i = 0; i < members.length; i++)
-                out.push({ app: members[i] });
+                out.push({ app: members[i], group: g });
         }
         return out;
     }
@@ -120,6 +121,11 @@ Rectangle {
             if (used + need > room && out[out.length - 1].length) {
                 out.push([]);
                 used = 0;
+                // A page that goes on with a group starts with its heading.
+                if (!e.heading) {
+                    out[out.length - 1].push({ heading: titles[e.group], group: e.group });
+                    used = Theme.groupHeight;
+                }
             }
             out[out.length - 1].push(e);
             used += h;
@@ -226,20 +232,12 @@ Rectangle {
         width: parent.width - 2 * Theme.margin
         height: parent.height - y - Theme.footHeight
 
-        // Swipe sideways to change page. Under the rows, so their taps win.
-        MouseArea {
+        // Swipe sideways to change page. Under the rows, so their taps win;
+        // a swipe that starts on a row reaches the list through the row's
+        // swiped.
+        TapArea {
             anchors.fill: parent
-            property real startX: 0
-            property real startY: 0
-            onPressed: mouse => {
-                startX = mouse.x;
-                startY = mouse.y;
-            }
-            onReleased: mouse => {
-                var dx = mouse.x - startX;
-                if (Math.abs(dx) > 110 && Math.abs(dx) > Math.abs(mouse.y - startY))
-                    root.turn(dx < 0 ? 1 : -1);
-            }
+            onSwiped: direction => root.turn(direction)
         }
 
         Column {
@@ -275,10 +273,11 @@ Rectangle {
                                 font.family: fontSet.sansSemi
                                 font.weight: Font.DemiBold
                                 font.pixelSize: 36
-                                MouseArea {
+                                TapArea {
                                     anchors.fill: parent
                                     anchors.margins: -24
-                                    onClicked: root.install(root.updatable.map(a => a.dir))
+                                    onTapped: root.install(root.updatable.map(a => a.dir))
+                                    onSwiped: direction => root.turn(direction)
                                 }
                             }
                             Rectangle {
@@ -299,6 +298,7 @@ Rectangle {
                             onInstall: root.install([modelData.app.dir])
                             onCancel: root.cancel(modelData.app.dir)
                             onDetails: root.openDir = modelData.app.dir
+                            onSwiped: direction => root.turn(direction)
                         }
                     }
                 }

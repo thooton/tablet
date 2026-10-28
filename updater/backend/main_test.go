@@ -323,6 +323,16 @@ func TestDoneMarkClears(t *testing.T) {
 		a := find(s, "demo")
 		return !s.Busy && a.Status == "current" && a.Job != nil && a.Job.Phase == "done"
 	})
+
+	// Reopening a moment later (what AppLoad and the UI send on opening)
+	// shows the state as it is: DONE stays.
+	app.handle(msgSystemNewCoordinator, []byte("1"))
+	app.handle(msgState, nil)
+	time.Sleep(200 * time.Millisecond)
+	if s := rec.last(); s.Checking || find(s, "demo").Job == nil || find(s, "demo").Job.Phase != "done" {
+		t.Fatalf("after reopening: checking %v, job %+v; want DONE kept", s.Checking, find(s, "demo").Job)
+	}
+
 	app.handle(msgCheck, nil)
 	s = rec.waitFor(t, "the re-check", func(s State) bool { return !s.Checking })
 	if a := find(s, "demo"); a.Status != "current" || a.Job != nil {
