@@ -18,7 +18,10 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Theme.buttonRadius
-        color: area.pressed ? "#d8d8d8" : Theme.paper
+        // No pressed-state fill: on e-ink its grey-on-down, white-on-up would
+        // be two refreshes (a double flash) for one tap. The result of the tap
+        // -- the answer revealed, or the next card -- is feedback enough.
+        color: Theme.paper
         border.width: button.preferred ? 5 : 2
         border.color: button.enabled ? Theme.ink : Theme.faint
     }
