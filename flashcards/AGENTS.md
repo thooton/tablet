@@ -44,9 +44,9 @@ not yet due, likeliest forgotten first (`session.earliest`, the phone's
 
 ## The look
 
-Anki's desktop window under the other apps' header: ← and where it leads
-from (Flashcards on the deck list, where ← closes the app; the deck's name
-anywhere in a deck, where ← goes up a level), Sync on the right;
+Anki's desktop window under the other apps' header: ← on the left (up a
+level; on the deck list it closes the app), where the user is centred
+(Flashcards, or the deck's name), Sync on the right;
 the deck table (Deck, New, Learn, Due) with "Studied N cards today." under
 it; the overview (the deck's name, New / Learning / To Review, Study Now,
 Options in the bottom bar); the reviewer (the card centred, the answer

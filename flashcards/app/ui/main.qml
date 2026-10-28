@@ -4,7 +4,7 @@ import "components"
 import "js/theme.js" as Theme
 
 // Flashcards: Anki's desktop window on the reMarkable, in black and white.
-// Its toolbar (← and where it leads from, Sync), the deck list, a deck's overview with Study
+// Its toolbar (←, where the user is, Sync), the deck list, a deck's overview with Study
 // Now, the reviewer, and the deck's options; and, until the tablet is
 // paired with the command center, the pairing code. Where Anki tells the
 // queues apart by colour, a shape does: New a triangle, Learning a square,
@@ -162,40 +162,29 @@ Rectangle {
             close();
     }
 
-    // ---- toolbar: ← and where it leads from, as the other apps have it;
-    // Sync on the right
+    // ---- toolbar: ← on the left, where the user is centred, Sync on the
+    // right, as the other apps have it
     Item {
         id: toolbar
         width: parent.width
         height: Theme.toolbarHeight
         visible: root.paired
 
-        Row {
-            id: backRow
-            x: 44
-            height: parent.height
-            spacing: 18
-            Image {
-                source: "images/back.png"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            Text {
-                id: backTitle
-                width: Math.min(implicitWidth, toolbar.width - 2 * Theme.margin - sync.width - 44 - 56 - 18)
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.screen === "decks" ? "Flashcards" : (root.deck ? root.deck.name : "")
-                elide: Text.ElideRight
-                color: Theme.ink
-                font.family: fontSet.sansMedium
-                font.weight: Font.Medium
-                font.pixelSize: 38
-            }
-        }
-        // ← and its title, with a margin round them.
-        MouseArea {
-            width: backRow.x + backRow.width + 30
-            height: parent.height
+        BackButton {
+            anchors.verticalCenter: parent.verticalCenter
             onClicked: root.back()
+        }
+        // Where the user is, centred: Flashcards, or the deck.
+        Text {
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width - 2 * (Theme.margin + sync.width + 32))
+            horizontalAlignment: Text.AlignHCenter
+            text: root.screen === "decks" ? "Flashcards" : (root.deck ? root.deck.name : "")
+            elide: Text.ElideRight
+            color: Theme.ink
+            font.family: fontSet.sansMedium
+            font.weight: Font.Medium
+            font.pixelSize: 38
         }
         ToolLink {
             id: sync
@@ -210,6 +199,29 @@ Rectangle {
             width: parent.width
             height: 2
             color: Theme.rule
+        }
+    }
+    // ←, flashing white on black when tapped, as Biblioteca's does.
+    component BackButton: Item {
+        signal clicked
+        x: 44
+        width: 56
+        height: 56
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -8
+            visible: backArea.lit
+            color: Theme.ink
+        }
+        Image {
+            anchors.fill: parent
+            source: backArea.lit ? "images/back-white.png" : "images/back.png"
+        }
+        FlashArea {
+            id: backArea
+            anchors.fill: parent
+            anchors.margins: -28
+            onTapped: parent.clicked()
         }
     }
     component ToolLink: Text {
@@ -803,15 +815,9 @@ Rectangle {
         visible: root.info !== null && !root.info.paired
         anchors.fill: parent
 
-        Image {
-            source: "images/back.png"
-            x: 44
+        BackButton {
             y: (Theme.toolbarHeight - height) / 2
-            MouseArea {
-                anchors.fill: parent
-                anchors.margins: -28
-                onClicked: root.close()
-            }
+            onClicked: root.close()
         }
         Column {
             anchors.centerIn: parent
