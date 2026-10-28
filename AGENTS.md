@@ -19,7 +19,8 @@ has its own `AGENTS.md`; read it before changing that app.
   repository's releases (AppLoad id `updater`).
 - `tools/`: what the apps share: `appbuild.py` (rcc, the Go backend for both
   CPUs, the release archive) and `emulator.py` (runs any app on a computer), and `make_icons.py`
-  (draws the Biblioteca, Flashcards and Updater icons).
+  (draws the Biblioteca, Flashcards and Updater icons), and `drive.py`
+  (drives an app in `emulator.py --control`, for QA).
 
 This is not the phone's Tablet app (`tablet/` in thooton/sonim), which
 browses the tablet's documents through the Delta command center. The tablet
@@ -132,6 +133,26 @@ The emulator runs the app's real QML and backend in a 1404×1872 window
 (`--env NAME=VALUE` passes settings to the backend). `--shot` saves a
 screenshot and quits, which works without a display; look at it before
 pushing a UI change.
+
+To drive an app step by step without a display, as QA does, start it with
+`--offscreen --control 47011` and send it commands with `tools/drive.py`:
+`tap X Y`, `swipe X1 Y1 X2 Y2 [ms]`, `type TEXT`, `key Return`,
+`shot FILE` and `quit`, each answered `ok` or `error ...`. Without a display
+Qt still wants `libEGL`, `libGL`, `libxkbcommon` and `libfontconfig`
+(Debian: `libegl1 libgl1 libxkbcommon0 libfontconfig1`).
+
+## Nightly QA
+
+Every night the Delta command center has cloud sessions go through each app
+here (see "Nightly QA" in thooton/delta's AGENTS.md): one explores it in
+`tools/emulator.py` and files findings, another fixes what should be fixed
+and pushes to master, and then one refactors the whole repository.
+
+- Each app has a `SPEC.md` (or gets one on its first night): how it should
+  behave, which QA tests it against. When you change what an app does,
+  change its `SPEC.md` in the same commit. A change to `SPEC.md` alone is
+  not part of the app's build and needs no version bump.
+- `qa/...` branches are QA jobs' work in progress; leave them alone.
 
 ## Releases
 

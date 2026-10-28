@@ -13,6 +13,11 @@ header+body protocol (over TCP here).
                         one every second, starting at --after / 2)
     --verbose           log every message
     --offscreen         no window (QT_QPA_PLATFORM=offscreen), for --shot
+    --control PORT      take commands on 127.0.0.1:PORT, a line each, so an
+                        agent can drive the app step by step (tools/drive.py
+                        sends them): tap X Y, swipe X1 Y1 X2 Y2 [MS],
+                        type TEXT, key NAME (Return, Backspace, ...),
+                        shot FILE, quit. Each is answered "ok" or "error ...".
 
 Needs PySide6 (pip install PySide6) and Go. Mouse clicks act as taps; S
 saves a screenshot to build/emulator/, Esc quits. Biblioteca has its
@@ -49,13 +54,14 @@ def main() -> int:
     ap.add_argument("--scale", type=float, default=0.0)
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--offscreen", action="store_true")
+    ap.add_argument("--control", type=int, default=0)
     args = ap.parse_args()
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
     from PySide6.QtCore import (QByteArray, QEvent, QMetaObject, QObject, QPointF, QProcess,
                                 QProcessEnvironment, Property, QResource, Qt, QTimer, QUrl, Signal, Slot)
-    from PySide6.QtGui import QGuiApplication, QImage, QKeySequence, QMouseEvent, QShortcut
+    from PySide6.QtGui import QGuiApplication, QImage, QKeyEvent, QKeySequence, QMouseEvent, QShortcut
     from PySide6.QtNetwork import QHostAddress, QTcpServer
     from PySide6.QtQml import qmlRegisterType
     from PySide6.QtQuick import QQuickView
@@ -203,6 +209,90 @@ def main() -> int:
                              Qt.LeftButton if kind == QEvent.MouseButtonPress else Qt.NoButton, Qt.NoModifier)
             QGuiApplication.sendEvent(view, ev)
         log(f"tap {x},{y}")
+
+    def mouse(kind, x, y, buttons):
+        pos = QPointF(x * scale, y * scale)
+        button = Qt.LeftButton if kind != QEvent.MouseMove else Qt.NoButton
+        QGuiApplication.sendEvent(view, QMouseEvent(kind, pos, pos, button, buttons, Qt.NoModifier))
+
+    def swipe(x1, y1, x2, y2, ms, done):
+        steps = max(5, ms // 16)
+        mouse(QEvent.MouseButtonPress, x1, y1, Qt.LeftButton)
+
+        def step(i):
+            if i <= steps:
+                mouse(QEvent.MouseMove, x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps, Qt.LeftButton)
+                QTimer.singleShot(max(1, ms // steps), lambda: step(i + 1))
+            else:
+                mouse(QEvent.MouseButtonRelease, x2, y2, Qt.NoButton)
+                log(f"swipe {x1},{y1} to {x2},{y2}")
+                done()
+
+        step(1)
+
+    def key(code, text=""):
+        for kind in (QEvent.KeyPress, QEvent.KeyRelease):
+            QGuiApplication.sendEvent(view, QKeyEvent(kind, code, Qt.NoModifier, text))
+
+    def command(line, reply):
+        """Runs one --control command and calls reply with its answer."""
+        word, _, rest = line.strip().partition(" ")
+        nums = lambda: [int(float(v)) for v in rest.split()]
+        later = lambda: QTimer.singleShot(400, lambda: reply("ok"))
+        try:
+            if word == "tap":
+                x, y = nums()
+                tap(x, y)
+                later()
+            elif word == "swipe":
+                v = nums()
+                swipe(v[0], v[1], v[2], v[3], v[4] if len(v) > 4 else 300, later)
+            elif word == "type":
+                for ch in rest:
+                    key(Qt.Key_unknown, ch)
+                later()
+            elif word == "key":
+                code = getattr(Qt, "Key_" + rest.strip(), None)
+                if code is None:
+                    reply(f"error no key called {rest.strip()!r} (Qt's names: Return, Backspace, Tab, Up, ...)")
+                    return
+                key(code)
+                later()
+            elif word == "shot":
+                if not rest.strip():
+                    reply("error give a file name")
+                    return
+                path = Path(rest.strip()).resolve()
+                shoot(path)
+                reply(f"ok {path}")
+            elif word == "quit":
+                reply("ok")
+                QTimer.singleShot(200, qapp.quit)
+            else:
+                reply(f"error unknown command {word!r} (tap, swipe, type, key, shot, quit)")
+        except (ValueError, IndexError):
+            reply(f"error can't read {line.strip()!r}")
+
+    if args.control:
+        control = QTcpServer()
+
+        def accepted():
+            conn = control.nextPendingConnection()
+            buf = [b""]
+
+            def readable():
+                buf[0] += bytes(conn.readAll().data())
+                while b"\n" in buf[0]:
+                    line, buf[0] = buf[0].split(b"\n", 1)
+                    command(line.decode(), lambda answer: (conn.write(QByteArray((answer + "\n").encode())), conn.flush()))
+
+            conn.readyRead.connect(readable)
+
+        control.newConnection.connect(accepted)
+        if not control.listen(QHostAddress.LocalHost, args.control):
+            log(f"can't listen on port {args.control}")
+            return 1
+        log(f"taking commands on 127.0.0.1:{args.control}")
 
     for i, t in enumerate(args.tap):
         x, y = (int(v) for v in t.split(","))
