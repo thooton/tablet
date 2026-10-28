@@ -68,7 +68,7 @@ Rectangle {
                 color: Theme.ink
                 font.family: bar.fonts.sansSemi
                 font.weight: Font.DemiBold
-                font.pixelSize: 35
+                font.pixelSize: 44
             }
             Rectangle {
                 id: tag

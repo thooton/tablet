@@ -69,7 +69,7 @@ which holds `install.sh`, `uninstall.sh`, the app and the stories.
    where to get it) and installs the build that matches the tablet's CPU.
 
 3. Open the **AppLoad** menu, tap **Reload**, and tap **Biblioteca**. The
-   **←** in the library closes the app.
+   **X** in the library closes the app.
 
 To update, unpack a newer archive over the same folder and run `install.sh`
 again (the Updater does exactly this). Your reading progress and your own

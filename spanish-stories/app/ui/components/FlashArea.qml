@@ -1,19 +1,13 @@
 import QtQuick
 
-// A button's tap area. `lit` is true while it is held and for a moment
-// after, so the button can draw itself inverted (white on black) to show
-// the tap landed; `tapped` fires once that moment is over, so the flash
-// is on screen before whatever the tap does.
+// A button's tap area. It fires `tapped` the instant the tap lands, with no
+// flash: on e-ink the white-on-black feedback cost two refreshes (invert,
+// then restore) for one tap, and the result of the tap is feedback enough.
+// `lit` stays for the buttons that read it; it is simply never on now.
 MouseArea {
     id: area
-    readonly property bool lit: pressed || flash.running
+    readonly property bool lit: false
     signal tapped
 
-    onClicked: flash.start()
-
-    Timer {
-        id: flash
-        interval: 150
-        onTriggered: area.tapped()
-    }
+    onClicked: area.tapped()
 }

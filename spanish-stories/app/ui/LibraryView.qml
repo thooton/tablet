@@ -2,7 +2,7 @@ import QtQuick
 import "components"
 import "js/theme.js" as Theme
 
-// Library: ← (back to the reMarkable), Biblioteca centred and ⋮ in the header, level
+// Library: X (closes the app), Biblioteca centred and ⋮ in the header, level
 // tabs, then eight stories per page, most recently opened first. Swipe to
 // change page.
 Item {
@@ -52,7 +52,7 @@ Item {
         height: Theme.headHeight
         IconButton {
             objectName: "libraryBack"
-            icon: "back"
+            icon: "close"
             x: Theme.headPad
             y: (Theme.headHeight - 3 - height) / 2
             onClicked: view.closeApp()
@@ -64,9 +64,9 @@ Item {
             verticalAlignment: Text.AlignVCenter
             text: "Biblioteca"
             color: Theme.ink
-            font.family: view.fonts.sansMedium
-            font.weight: Font.Medium
-            font.pixelSize: 40
+            font.family: view.fonts.sansSemi
+            font.weight: Font.DemiBold
+            font.pixelSize: 44
         }
         IconButton {
             objectName: "libraryMenuButton"
