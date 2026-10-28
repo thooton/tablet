@@ -8,6 +8,8 @@
         <file>ui/js/theme.js</file>
         <file>ui/images/back.png</file>
         <file>ui/images/back-white.png</file>
+        <file>ui/images/close.png</file>
+        <file>ui/images/close-white.png</file>
         <file>ui/fonts/IBMPlexSans-Regular.ttf</file>
         <file>ui/fonts/IBMPlexSans-Medium.ttf</file>
         <file>ui/fonts/IBMPlexSans-SemiBold.ttf</file>

@@ -44,11 +44,13 @@ not yet due, likeliest forgotten first (`session.earliest`, the phone's
 
 ## The look
 
-Anki's desktop window under the other apps' header: ← on the left (up a
-level; on the deck list it closes the app), where the user is centred
-(Flashcards, or the deck's name), Sync on the right;
+Anki's desktop window under one header: X on the deck list (it closes the
+app) or ← in a deck (up a level) on the left; the screen's name centred,
+semibold and the largest text in the bar (Flashcards, the deck's name, or
+Options), never repeated on the page; Sync on the right, smaller and
+regular;
 the deck table (Deck, New, Learn, Due) with "Studied N cards today." under
-it; the overview (the deck's name, New / Learning / To Review, Study Now,
+it; the overview (New, Learning and To Review as large counts, Study Now,
 Options in the bottom bar); the reviewer (the card centred, the answer
 under a rule, Anki's bottom bar with the counts over Show Answer, then
 Again Hard Good Easy, each under its interval); the options (a Daily
