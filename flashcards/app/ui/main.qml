@@ -163,9 +163,7 @@ Rectangle {
     }
 
     // ---- toolbar: the way out on the left (X on the deck list, which closes
-    // the app; ← in a deck, up a level), the screen's name centred and the
-    // heaviest thing in the bar, Sync on the right, quieter. The name is
-    // never repeated on the page under it.
+    // the app; ← in a deck, up a level), Sync on the right
     Item {
         id: toolbar
         width: parent.width
@@ -176,19 +174,6 @@ Rectangle {
             icon: root.screen === "decks" ? "close" : "back"
             anchors.verticalCenter: parent.verticalCenter
             onClicked: root.back()
-        }
-        Text {
-            anchors.centerIn: parent
-            width: Math.min(implicitWidth, parent.width - 2 * (Theme.margin + sync.width + 32))
-            horizontalAlignment: Text.AlignHCenter
-            text: root.screen === "decks" ? "Flashcards"
-                : root.screen === "options" ? "Options"
-                : (root.deck ? root.deck.name : "")
-            elide: Text.ElideRight
-            color: Theme.ink
-            font.family: fontSet.sansSemi
-            font.weight: Font.DemiBold
-            font.pixelSize: 44
         }
         ToolLink {
             id: sync
@@ -235,7 +220,7 @@ Rectangle {
         color: Theme.ink
         font.family: current ? fontSet.sansSemi : fontSet.sans
         font.weight: current ? Font.DemiBold : Font.Normal
-        font.pixelSize: 34
+        font.pixelSize: 38
         MouseArea {
             anchors.fill: parent
             anchors.margins: -30
@@ -382,49 +367,56 @@ Rectangle {
 
         Column {
             width: parent.width
-            topPadding: 160
+            topPadding: 120
             spacing: 0
-            // New, Learning, To Review: each count large over its name.
-            Row {
-                visible: overview.any
-                anchors.horizontalCenter: parent.horizontalCenter
-                Repeater {
-                    model: ["New", "Learning", "To Review"]
-                    Column {
-                        width: 340
-                        spacing: 8
-                        readonly property bool none: overview.counts[index] === 0
-                        Row {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 20
-                            Mark {
-                                queue: index
-                                size: 36
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: none ? Theme.faint : Theme.ink
-                            }
-                            Text {
-                                text: overview.counts[index]
-                                color: none ? Theme.faint : Theme.ink
-                                font.family: fontSet.sansSemi
-                                font.weight: Font.DemiBold
-                                font.pixelSize: 96
-                            }
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: root.deck ? root.deck.name : ""
+                wrapMode: Text.Wrap
+                color: Theme.ink
+                font.family: fontSet.sansSemi
+                font.weight: Font.DemiBold
+                font.pixelSize: 56
+                bottomPadding: 64
+            }
+            // New, Learning, To Review, as Anki's table under the name.
+            Repeater {
+                model: overview.any ? ["New:", "Learning:", "To Review:"] : []
+                Item {
+                    width: overview.width
+                    height: 76
+                    Row {
+                        x: overview.width / 2 - 360
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 22
+                        Text {
+                            width: 340
+                            horizontalAlignment: Text.AlignRight
+                            text: modelData
+                            color: Theme.ink
+                            font.family: fontSet.sans
+                            font.pixelSize: 42
+                        }
+                        Mark {
+                            queue: index
+                            size: 30
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: overview.counts[index] === 0 ? Theme.faint : Theme.ink
                         }
                         Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: modelData
-                            color: Theme.subtle
+                            text: overview.counts[index]
+                            color: overview.counts[index] === 0 ? Theme.faint : Theme.ink
                             font.family: fontSet.sansMedium
                             font.weight: Font.Medium
-                            font.pixelSize: 34
+                            font.pixelSize: 42
                         }
                     }
                 }
             }
             Item {
                 width: parent.width
-                height: 280
+                height: 180
                 visible: overview.any
                 AnkiButton {
                     anchors.centerIn: parent
@@ -674,6 +666,15 @@ Rectangle {
             x: Theme.margin
             topPadding: 72
             spacing: 40
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: root.deck ? root.deck.name : ""
+                elide: Text.ElideRight
+                color: Theme.subtle
+                font.family: fontSet.sans
+                font.pixelSize: 36
+            }
             // Anki's options sit on cards, each under its section's name.
             Rectangle {
                 width: parent.width

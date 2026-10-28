@@ -10,7 +10,7 @@ var subtle = "#555555";      // labels, intervals
 var faint = "#9a9a9a";       // a zero count
 var rule = "#9a9a9a";
 
-var toolbarHeight = 128;
+var toolbarHeight = 112;
 var margin = 64;
 
 var deckRow = 112;
