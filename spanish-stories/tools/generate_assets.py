@@ -18,21 +18,19 @@ INK = "#000000"
 
 
 def dots_tile(path: Path) -> None:
-    # The mockup's dotted underline: radial-gradient(circle, #6a6a6a 2.3px,
-    # transparent 2.9px) in a 10 x 8 tile, repeated along each phrase.
+    # The dotted underline: a black dot 4 px across in a 10 x 8 tile, repeated
+    # along each phrase. Solid black, no soft edge: greys wash out on e-ink.
     img = QImage(10, 8, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     for y in range(8):
         for x in range(10):
-            # Average 4x4 subsamples for a smooth edge.
-            cover = 0.0
+            # Inked where most of the pixel is inside the dot.
+            cover = 0
             for sy in range(4):
                 for sx in range(4):
                     d = ((x + (sx + 0.5) / 4 - 5) ** 2 + (y + (sy + 0.5) / 4 - 4) ** 2) ** 0.5
-                    cover += 1.0 if d <= 2.3 else max(0.0, (2.9 - d) / 0.6)
-            c = QColor("#6a6a6a")
-            c.setAlphaF(min(1.0, cover / 16))
-            img.setPixelColor(x, y, c)
+                    cover += d <= 2.4
+            img.setPixelColor(x, y, QColor(INK) if cover >= 8 else QColor(Qt.transparent))
     img.save(str(path))
 
 

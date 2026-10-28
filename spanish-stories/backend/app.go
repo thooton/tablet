@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"slices"
 	"sort"
 	"strings"
@@ -117,8 +118,11 @@ func (a *App) save() {
 }
 
 func (a *App) story(id string) (*Story, error) {
+	// A story whose file was deleted since the library was read is gone.
 	if s, ok := a.stories[id]; ok {
-		return s, nil
+		if _, err := os.Stat(s.File); err == nil {
+			return s, nil
+		}
 	}
 	a.library()
 	if s, ok := a.stories[id]; ok {

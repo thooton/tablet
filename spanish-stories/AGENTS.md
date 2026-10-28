@@ -246,7 +246,9 @@ packet, which the kernel refuses past the socket's send buffer (about
 208 KiB), and a backend that then quits crashes the tablet's UI. A story
 that fits in the window is held whole and has page numbers; a longer one
 (a novel) shows the percent read, and its slider jumps by percent. Reading
-backwards past where it was opened, or jumped to, starts a new page there.
+backwards past where it was opened, or jumped to, starts a new page there,
+and the text before it is paged back from there, so every page turned back
+onto is full.
 When a chunk arrives at the window's end, only the last pages are laid out
 again, from the last but one that begins a token.
 

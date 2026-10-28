@@ -165,6 +165,23 @@ func TestAppFlow(t *testing.T) {
 	}
 }
 
+// A story whose file goes after the library was shown can't be opened.
+func TestOpenDeletedStory(t *testing.T) {
+	dir := t.TempDir()
+	writeStory(t, dir, "01-a.json", `{"title": "A", "content": [["uno", "one"]]}`)
+	app := newApp([]string{dir}, filepath.Join(t.TempDir(), "state.json"))
+	app.handle(reqList, nil)
+	if err := os.Remove(filepath.Join(dir, "01-a.json")); err != nil {
+		t.Fatal(err)
+	}
+	if r := app.handle(reqOpen, []byte(`{"id": "01-a"}`)); r[0].Type != respError {
+		t.Fatalf("opened a deleted story: %+v", r)
+	}
+	if _, ok := app.state.Stories["01-a"]; ok {
+		t.Fatal("progress saved for a deleted story")
+	}
+}
+
 func TestLibraryOrder(t *testing.T) {
 	dir := t.TempDir()
 	for _, id := range []string{"01-a", "02-b", "03-c", "04-d"} {

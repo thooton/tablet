@@ -230,7 +230,14 @@ Item {
     }
 
     // ---- layout
+    // The word the page turned to began with. A re-flow (another font or
+    // size, more text) keeps it on screen, rather than the re-flowed page's
+    // first word, which would creep back a little with every change.
     property int anchorToken: 0
+    function keepAnchor() {
+        if (pages.length && (anchorToken < page.startToken || anchorToken > page.endToken))
+            anchorToken = page.startToken;
+    }
     function scheduleLayout(token) {
         anchorToken = token;
         Qt.callLater(function () {
@@ -239,17 +246,34 @@ Item {
         });
     }
     function currentToken() {
-        return pages.length ? page.startToken : anchorToken;
+        keepAnchor();
+        return anchorToken;
     }
     function relayout() {
         if (!active || !story || !tokens.length) {
             pages = [];
             return;
         }
-        if (pages.length)
-            anchorToken = page.startToken;
+        keepAnchor();
         titleText.forceLayout();
         setPages(paginate(tokens, winStart, indentFirst, winStart === 0 ? titleBlock.height : 0));
+        dropShortStart();
+    }
+    // Text fetched backwards is laid out back from where it meets the rest
+    // (layout.js), so only the window's first page can be short. Unless it is
+    // on screen, it goes, and comes back with the next chunk fetched before
+    // it, whole.
+    function dropShortStart() {
+        if (winStart <= 0 || pageIndex < 1 || pages.length < 2 || !restarts.length
+                || pages[0].lines.length >= linesPerPage || !pages[1].startClean)
+            return;
+        var s = pages[1].startToken;
+        indentFirst = Layout.isParagraphBreak(tokens[s - winStart - 1][0]);
+        restarts = restarts.filter(function (r) { return r > s; });
+        tokens = tokens.slice(s - winStart);
+        winStart = s;
+        pages = pages.slice(1);
+        pageIndex -= 1;
     }
     // After text arrives at the window's end only its last pages can change,
     // so the layout starts again from the last page but one (if it begins a
@@ -268,7 +292,7 @@ Item {
             relayout();
             return;
         }
-        anchorToken = page.startToken;
+        keepAnchor();
         var s = pages[k].startToken;
         var tail = paginate(tokens.slice(s - winStart), s, Layout.isParagraphBreak(token(s - 1)[0]), 0);
         setPages(pages.slice(0, k).concat(tail));
@@ -336,6 +360,7 @@ Item {
     }
 
     function pageShown() {
+        anchorToken = page.startToken;
         if (atEnd)
             finished = true;
         savePosition(page.startToken, atEnd);
@@ -602,6 +627,7 @@ Item {
                     if (reader.whole) {
                         reader.selectedTok = -1;
                         reader.pageIndex = 0;
+                        reader.anchorToken = 0;
                     } else {
                         reader.jumpTo(0, false);
                     }

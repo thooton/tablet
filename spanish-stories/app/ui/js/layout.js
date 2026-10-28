@@ -262,9 +262,44 @@ function paginate(tokens, measure, opts) {
         y += lh;
     }
 
+    // Text before a restart was fetched backwards, so its pages are cut from
+    // the restart back: each is full and the last ends just before the
+    // restart, and only the window's first page may be short.
+    var held = [];
+    function holdLine(line, last) {
+        held.push({ line: line, last: last });
+    }
+    function placeHeld() {
+        var room = Math.floor((opts.height - y) / lh);
+        var full = Math.floor(opts.height / lh);
+        var sizes = [];
+        var left = held.length;
+        while (left > room) {
+            var take = left - full >= 1 ? full : left - room;
+            sizes.unshift(take);
+            left -= take;
+        }
+        sizes.unshift(left);
+        var h = 0;
+        for (var g = 0; g < sizes.length; g++) {
+            if (g > 0 && page.pieces.length) newPage();
+            for (var n = 0; n < sizes[g]; n++, h++) placeLine(held[h].line, held[h].last);
+        }
+        held = [];
+    }
+
     newPage();
+    var backwards = false;
     for (var p = 0; p < paragraphs.length; p++) {
         var para = paragraphs[p];
+        if (p === 0) {
+            for (var q = 1; q < paragraphs.length && !backwards; q++) backwards = paragraphs[q].restart;
+        } else if (para.restart) {
+            if (backwards) placeHeld();
+            backwards = false;
+            for (q = p + 1; q < paragraphs.length && !backwards; q++) backwards = paragraphs[q].restart;
+        }
+        var emit = backwards ? holdLine : placeLine;
         if (para.restart && page.pieces.length) newPage();
         var clusters = [];
         for (var c0 = 0; c0 < para.clusters.length; c0++) {
@@ -279,15 +314,16 @@ function paginate(tokens, measure, opts) {
             var cw = clusterWidth(cl);
             var gap = (line.entries.length && cl.spaced) ? opts.spaceWidth : 0;
             if (line.entries.length && line.end + gap + cw > opts.width) {
-                placeLine(line, false);
+                emit(line, false);
                 line = { start: 0, end: 0, entries: [] };
                 gap = 0;
             }
             line.entries.push({ cl: cl, gap: gap });
             line.end += gap + cw;
         }
-        if (line.entries.length) placeLine(line, true);
+        if (line.entries.length) emit(line, true);
     }
+    if (held.length) placeHeld();
 
     for (var j = pages.length - 2; j >= 0; j--) pages[j].wordsLeft += pages[j + 1].wordsLeft;
 
