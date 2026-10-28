@@ -207,28 +207,21 @@ Rectangle {
             color: Theme.rule
         }
     }
-    // X or ←, flashing white on black when tapped.
+    // X or ←.
     component NavButton: Item {
         property string icon: "back"
         signal clicked
         x: 44
         width: 56
         height: 56
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -8
-            visible: backArea.lit
-            color: Theme.ink
-        }
         Image {
             anchors.fill: parent
-            source: "images/" + parent.icon + (backArea.lit ? "-white" : "") + ".png"
+            source: "images/" + parent.icon + ".png"
         }
-        FlashArea {
-            id: backArea
+        MouseArea {
             anchors.fill: parent
             anchors.margins: -28
-            onTapped: parent.clicked()
+            onClicked: parent.clicked()
         }
     }
     component ToolLink: Text {
