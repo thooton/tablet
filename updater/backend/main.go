@@ -1,6 +1,5 @@
-// Command entry is the AppLoad backend of the Updater app. AppLoad starts it
-// as <app dir>/backend/entry with the path of a unix socket as its only
-// argument (the desktop emulator passes "tcp:<host>:<port>" instead).
+// Command entry is the AppLoad backend of the Updater app (see tools/appload
+// for how AppLoad runs it).
 //
 // It reads manifest.json from the "latest" release of thooton/tablet,
 // compares each app's version with the one AppLoad has, and installs the
@@ -9,70 +8,24 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
 	"path/filepath"
-	"sync"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
-func logf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "[updater] "+format+"\n", args...)
-}
-
-func env(name, fallback string) string {
-	if v := os.Getenv(name); v != "" {
-		return v
-	}
-	return fallback
-}
+var logf = appload.Logf
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: entry <unix socket path | tcp:host:port>")
-		os.Exit(2)
-	}
-	conn, err := dial(os.Args[1])
-	if err != nil {
-		logf("cannot connect to %s: %v", os.Args[1], err)
-		os.Exit(1)
-	}
-	defer conn.close()
+	conn := appload.Connect("updater")
+	defer conn.Close()
 
-	home := env("UPDATER_HOME", "/home/root")
-	appload := env("UPDATER_APPLOAD", filepath.Join(home, "xovi", "exthome", "appload"))
+	home := appload.Env("UPDATER_HOME", "/home/root")
+	apploadDir := appload.Env("UPDATER_APPLOAD", filepath.Join(home, "xovi", "exthome", "appload"))
 	cache := filepath.Join(home, ".cache", "updater")
-	rel := newRelease(env("UPDATER_RELEASE", defaultRelease))
+	rel := newRelease(appload.Env("UPDATER_RELEASE", defaultRelease))
 
-	var sendMu sync.Mutex
-	send := func(msgType int32, body any) {
-		data, err := json.Marshal(body)
-		if err != nil {
-			logf("encoding message %d: %v", msgType, err)
-			return
-		}
-		sendMu.Lock()
-		defer sendMu.Unlock()
-		if err := conn.send(msgType, data); err != nil {
-			logf("sending message %d: %v", msgType, err)
-		}
-	}
-	app := newApp(rel, appload, home, cache, send)
-	logf("started; AppLoad %s, packages in %s, release %s", appload, home, rel.base)
-	life := newLifecycle(executable(), app.busy)
-	go life.watch()
-
-	for {
-		msgType, body, err := conn.recv()
-		if err != nil {
-			logf("connection closed: %v", err)
-			break
-		}
-		life.seen(msgType, body)
-		if msgType == msgSystemTerminate {
-			break
-		}
-		app.handle(msgType, body)
-	}
+	app := newApp(rel, apploadDir, home, cache, conn.SendJSON)
+	logf("started; AppLoad %s, packages in %s, release %s", apploadDir, home, rel.base)
+	appload.Serve(conn, app.busy, app.handle)
 	app.close()
 }

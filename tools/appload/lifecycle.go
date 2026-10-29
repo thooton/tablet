@@ -1,4 +1,4 @@
-package main
+package appload
 
 import (
 	"os"
@@ -39,7 +39,7 @@ func newLifecycle(exe string, busy func() bool) *lifecycle {
 
 // seen notes AppLoad's -2 and -3, whose body is how many frontends remain.
 func (l *lifecycle) seen(msgType int32, body []byte) {
-	if msgType != msgSystemNewCoordinator && msgType != msgSystemLostCoordinator {
+	if msgType != MsgNewCoordinator && msgType != MsgLostCoordinator {
 		return
 	}
 	n, err := strconv.Atoi(string(body))
@@ -75,16 +75,8 @@ func (l *lifecycle) shouldExit(now time.Time) bool {
 func (l *lifecycle) watch() {
 	for range time.Tick(2 * time.Second) {
 		if l.shouldExit(time.Now()) {
-			logf("updated on disk and no frontend attached: exiting so the next open starts the new version")
+			Logf("updated on disk and no frontend attached: exiting so the next open starts the new version")
 			os.Exit(0)
 		}
 	}
-}
-
-func executable() string {
-	exe, err := os.Executable()
-	if err != nil {
-		return ""
-	}
-	return exe
 }

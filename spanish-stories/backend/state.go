@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // Reading progress, looked-up words and settings, kept in
@@ -62,18 +63,10 @@ func (s *State) progress(id string) *StoryProgress {
 	return p
 }
 
-// save writes atomically so a crash or power loss never leaves a torn file.
 func (s *State) save(path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return appload.WriteFile(path, data, 0o644)
 }

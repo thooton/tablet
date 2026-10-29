@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"path/filepath"
 	"sort"
 	"time"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // The decks, as this tablet has them: a copy of the command center's
@@ -111,26 +112,7 @@ func (c *collection) save() error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(c.path), 0o700); err != nil {
-		return err
-	}
-	tmp := c.path + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(data)
-	if err == nil {
-		err = f.Sync()
-	}
-	if cerr := f.Close(); err == nil {
-		err = cerr
-	}
-	if err != nil {
-		os.Remove(tmp)
-		return err
-	}
-	return os.Rename(tmp, c.path)
+	return appload.WriteFile(c.path, data, 0o600)
 }
 
 func (c *collection) dirty() bool {

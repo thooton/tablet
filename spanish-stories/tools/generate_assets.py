@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QPointF, Qt
-from PySide6.QtGui import QBrush, QColor, QFont, QFontDatabase, QGuiApplication, QImage, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QBrush, QColor, QGuiApplication, QImage, QPainter, QPainterPath, QPen
 
 ROOT = Path(__file__).resolve().parent.parent
 UI = ROOT / "app" / "ui"
@@ -34,13 +34,13 @@ def dots_tile(path: Path) -> None:
     img.save(str(path))
 
 
-def stroke_icon(path: Path, w: int, h: int, lines, width=3.2, dots=(), color=INK) -> None:
+def stroke_icon(path: Path, w: int, h: int, lines, width=3.2, dots=()) -> None:
     """Icons from the mockup's SVGs: square caps, mitred joins, ink colour."""
     img = QImage(w, h, QImage.Format_ARGB32)
     img.fill(Qt.transparent)
     p = QPainter(img)
     p.setRenderHint(QPainter.Antialiasing)
-    pen = QPen(QColor(color), width)
+    pen = QPen(QColor(INK), width)
     pen.setCapStyle(Qt.SquareCap)
     pen.setJoinStyle(Qt.MiterJoin)
     p.setPen(pen)
@@ -49,7 +49,7 @@ def stroke_icon(path: Path, w: int, h: int, lines, width=3.2, dots=(), color=INK
         for pt in pts[1:]:
             path_.lineTo(QPointF(*pt))
         p.drawPath(path_)
-    p.setBrush(QBrush(QColor(color)))
+    p.setBrush(QBrush(QColor(INK)))
     for cx, cy, r in dots:
         p.drawEllipse(QPointF(cx, cy), r, r)
     p.end()
@@ -57,12 +57,10 @@ def stroke_icon(path: Path, w: int, h: int, lines, width=3.2, dots=(), color=INK
 
 
 def icons(folder: Path) -> None:
-    # Each icon also in white ("-white"), drawn on black while it is pressed.
-    for suffix, color in (("", INK), ("-white", "#ffffff")):
-        stroke_icon(folder / f"back{suffix}.png", 56, 56, [[(44, 28), (12, 28)], [(24, 15), (11, 28), (24, 41)]], color=color)
-        stroke_icon(folder / f"menu{suffix}.png", 56, 56, [], dots=[(28, 13, 3.2), (28, 28, 3.2), (28, 43, 3.2)], color=color)
-        stroke_icon(folder / f"close{suffix}.png", 56, 56, [[(16, 16), (40, 40)], [(40, 16), (16, 40)]], color=color)
-        stroke_icon(folder / f"grab{suffix}.png", 96, 22, [[(4, 4), (48, 18), (92, 4)]], width=4, color=color)
+    stroke_icon(folder / "back.png", 56, 56, [[(44, 28), (12, 28)], [(24, 15), (11, 28), (24, 41)]])
+    stroke_icon(folder / "menu.png", 56, 56, [], dots=[(28, 13, 3.2), (28, 28, 3.2), (28, 43, 3.2)])
+    stroke_icon(folder / "close.png", 56, 56, [[(16, 16), (40, 40)], [(40, 16), (16, 40)]])
+    stroke_icon(folder / "grab.png", 96, 22, [[(4, 4), (48, 18), (92, 4)]], width=4)
 
 
 def main() -> int:

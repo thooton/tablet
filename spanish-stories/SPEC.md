@@ -225,7 +225,7 @@ See the repository's AGENTS.md for the e-ink rules. In addition:
    Should taps be recorded (for a future review list), or the dead code go?
 4. Opening a finished story returns to its last page. Should a finished
    story open at the start instead?
-5. The screenshots in docs/ predate 1.1.1 (they show `·` and an
+5. The screenshots in docs/screens/ predate 1.1.1 (they show `·` and an
    uncentred toolbar title), and AGENTS.md still says 22 stories and "all
    texts are in the public domain", which Harry Potter is not. Update them?
 6. The level tab and library page reset each time the app opens. Should

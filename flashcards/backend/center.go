@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // The command center: its flashcards sync, and pairing, which gives the
@@ -44,18 +46,14 @@ func (c *center) login() login {
 		json.Unmarshal(data, &l)
 	}
 	if l.Server == "" {
-		l.Server = env("FLASHCARDS_SERVER", defaultServer)
+		l.Server = appload.Env("FLASHCARDS_SERVER", defaultServer)
 	}
 	return l
 }
 
 func (c *center) save(l login) error {
 	data, _ := json.Marshal(l)
-	tmp := c.path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, c.path)
+	return appload.WriteFile(c.path, data, 0o600)
 }
 
 func (c *center) forget() {

@@ -34,11 +34,12 @@ jobs:
           sudo apt-get install -y -q qt6-base-dev-tools
           echo "RCC=$(dpkg -L qt6-base-dev-tools | grep '/rcc$' | head -n 1)" >> "$GITHUB_ENV"
 
-      # Every app's backend tests, then every app's build: <dir>/tools/build.py
-      # writes <dir>/dist/<dir>.tar.gz (see AGENTS.md).
+      # Every backend's tests and the shared Go package's, then every app's
+      # build: <dir>/tools/build.py writes <dir>/dist/<dir>.tar.gz (see
+      # AGENTS.md).
       - name: Test and build
         run: |
-          for mod in */backend/go.mod; do
+          for mod in */backend/go.mod tools/*/go.mod; do
             (cd "$(dirname "$mod")" && go vet ./... && go test ./...)
           done
           for build in */tools/build.py; do

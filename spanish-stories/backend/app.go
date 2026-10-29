@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // Message types exchanged with the QML frontend (bodies are JSON).
@@ -150,7 +152,7 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 	}
 
 	switch msgType {
-	case msgSystemNewCoordinator, reqList:
+	case appload.MsgNewCoordinator, reqList:
 		return []reply{{respLibrary, a.library()}}
 
 	case reqOpen:
@@ -227,7 +229,7 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 		a.save()
 		return []reply{{respLibrary, a.library()}}
 
-	case msgSystemLostCoordinator, msgSystemTerminate:
+	case appload.MsgLostCoordinator:
 		return nil
 	}
 	return []reply{errorReply(msgType, fmt.Sprintf("unknown message type %d", msgType))}

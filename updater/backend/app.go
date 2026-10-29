@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // Messages from the UI. Every answer is the whole state, as message 101.
@@ -84,10 +86,10 @@ type App struct {
 	idle     chan struct{}  // closed when the worker has stopped
 }
 
-func newApp(rel *release, appload, home, cache string, send func(int32, any)) *App {
+func newApp(rel *release, apploadDir, home, cache string, send func(int32, any)) *App {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &App{
-		rel: rel, appload: appload, home: home, cache: cache, send: send,
+		rel: rel, appload: apploadDir, home: home, cache: cache, send: send,
 		ctx: ctx, cancel: cancel,
 		icons: map[string]string{}, jobs: map[string]*Job{}, lastSent: map[string]int{},
 	}
@@ -109,9 +111,9 @@ func (a *App) handle(msgType int32, body []byte) {
 		}
 		json.Unmarshal(body, &req)
 		a.cancelQueued(req.App)
-	case msgState, msgSystemNewCoordinator:
+	case msgState, appload.MsgNewCoordinator:
 		// Opening the Updater checks for updates. The backend outlives the
-		// window (see lifecycle.go), so a reopened one checks again unless
+		// window (see tools/appload/lifecycle.go), so a reopened one checks again unless
 		// it checked a moment ago or is installing.
 		a.mu.Lock()
 		stale := !a.working && time.Since(a.checked) > time.Minute

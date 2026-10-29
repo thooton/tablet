@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // Messages between the QML and the backend.
@@ -73,7 +75,7 @@ func (a *app) handle(msgType int32, body []byte) {
 		json.Unmarshal(body, &in)
 	}
 	switch msgType {
-	case msgSystemNewCoordinator, msgHello:
+	case appload.MsgNewCoordinator, msgHello:
 		a.sendState()
 		a.mu.Lock()
 		stale := time.Since(a.lastSync) > syncOnOpenWait
@@ -84,7 +86,7 @@ func (a *app) handle(msgType int32, body []byte) {
 		if a.center.login().Token == "" {
 			go a.startPairing()
 		}
-	case msgSystemLostCoordinator:
+	case appload.MsgLostCoordinator:
 		a.saveNow()
 		go a.sync()
 	case msgStudy:

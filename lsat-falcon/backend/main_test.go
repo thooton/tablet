@@ -94,8 +94,6 @@ func TestMissingDeck(t *testing.T) {
 
 type recorder struct{ sent [][]byte }
 
-func (r *recorder) recv() (int32, []byte, error) { return 0, nil, nil }
-func (r *recorder) close() error                 { return nil }
 func (r *recorder) send(msgType int32, body []byte) error {
 	r.sent = append(r.sent, append([]byte(strconv.Itoa(int(msgType))+"|"), body...))
 	return nil
@@ -105,7 +103,7 @@ func TestChunking(t *testing.T) {
 	// Multi-byte text straddling every chunk boundary.
 	text := strings.Repeat("é—ab", chunkSize/3)
 	rec := &recorder{}
-	if err := sendChunked(rec, reply{respMeta, map[string]string{"t": text}}); err != nil {
+	if err := sendChunked(rec.send, reply{respMeta, map[string]string{"t": text}}); err != nil {
 		t.Fatal(err)
 	}
 	if len(rec.sent) < 2 {
@@ -129,7 +127,7 @@ func TestChunking(t *testing.T) {
 	}
 
 	rec = &recorder{}
-	_ = sendChunked(rec, reply{respState, map[string]string{"small": "yes"}})
+	_ = sendChunked(rec.send, reply{respState, map[string]string{"small": "yes"}})
 	if len(rec.sent) != 1 || !strings.HasPrefix(string(rec.sent[0]), "100|") {
 		t.Fatalf("small reply should go unchunked: %q", rec.sent)
 	}
