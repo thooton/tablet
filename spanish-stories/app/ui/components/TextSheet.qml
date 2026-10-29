@@ -161,7 +161,7 @@ Item {
                     x: sizes.leftEdge
                     width: sizes.span
                     height: 2
-                    color: Theme.rule
+                    color: Theme.ink
                 }
                 Repeater {
                     model: Theme.sampleSizes
@@ -208,7 +208,7 @@ Item {
                     x: 54
                     width: parent.width - 108
                     height: 2
-                    color: Theme.rule
+                    color: Theme.ink
                 }
                 Text {
                     x: 54
