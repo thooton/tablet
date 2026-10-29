@@ -66,6 +66,8 @@ func main() {
 		}
 	}
 	a := newApp(col, newCenter(dir), send)
+	a.prefsPath = filepath.Join(dir, "prefs.json")
+	a.loadPrefs()
 	logf("started; data in %s, %d cards", dir, len(col.Cards))
 	life := newLifecycle(executable(), a.busy)
 	go life.watch()

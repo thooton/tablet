@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -19,6 +20,7 @@ const (
 	msgSync    = 5 // sync now
 	msgPair    = 6 // ask the command center for a pairing code
 	msgStats   = 7 // {"deck", "whole"?}: the deck's statistics, or the collection's
+	msgPrefs   = 8 // {"show_progress"}: this device's display options
 
 	msgState = 101 // backend → UI: the decks and how sync stands
 	msgCard  = 102 // the card to show, or that the deck is done for now
@@ -48,6 +50,11 @@ type app struct {
 	pair    *pairing
 	pairErr string
 	pairing bool
+
+	// prefsPath keeps the display options (prefs.json); showProgress is
+	// Options > Show progress, off until asked for.
+	prefsPath    string
+	showProgress bool
 }
 
 func newApp(col *collection, c *center, send func(int32, any)) *app {
@@ -68,6 +75,7 @@ func (a *app) handle(msgType int32, body []byte) {
 		Ahead     bool   `json:"ahead"`
 		Whole     bool   `json:"whole"`
 		NewPerDay *int   `json:"new_per_day"`
+		ShowProg  *bool  `json:"show_progress"`
 	}
 	if len(body) > 0 {
 		json.Unmarshal(body, &in)
@@ -99,6 +107,10 @@ func (a *app) handle(msgType int32, body []byte) {
 	case msgOptions:
 		if in.NewPerDay != nil {
 			a.setOption(in.Deck, *in.NewPerDay)
+		}
+	case msgPrefs:
+		if in.ShowProg != nil {
+			a.setShowProgress(*in.ShowProg)
 		}
 	case msgSync:
 		go a.sync()
@@ -138,7 +150,7 @@ func (a *app) sendCard(deckID string, fresh bool) {
 	if fresh || k == nil || a.col.cards[k.ID] != k {
 		k = s.next(now)
 	}
-	out := map[string]any{"deck": deckID, "name": s.deck.Name, "counts": s.counts(now), "ahead": s.ahead, "studied": studiedIn(s)}
+	out := map[string]any{"deck": deckID, "name": s.deck.Name, "counts": s.counts(now), "ahead": s.ahead, "studied": studiedIn(s), "progress": progressOf(a.col.inDeck[deckID])}
 	if k == nil {
 		out["done"] = true
 		if next := s.nextLearningDue(now); next > 0 {
@@ -328,6 +340,46 @@ func (a *app) startPairing() {
 	a.mu.Unlock()
 }
 
+// progressOf is how far through a deck: 100% minus the share of its cards
+// still New, rounded down (the phone's ReviewSession.progress).
+func progressOf(cards []*card) int {
+	if len(cards) == 0 {
+		return 100
+	}
+	fresh := 0
+	for _, k := range cards {
+		if k.isNew() {
+			fresh++
+		}
+	}
+	return (len(cards) - fresh) * 100 / len(cards)
+}
+
+// loadPrefs reads the display options; a missing or unreadable file is all off.
+func (a *app) loadPrefs() {
+	var p struct {
+		ShowProgress bool `json:"show_progress"`
+	}
+	if data, err := os.ReadFile(a.prefsPath); err == nil {
+		json.Unmarshal(data, &p)
+	}
+	a.showProgress = p.ShowProgress
+}
+
+func (a *app) setShowProgress(on bool) {
+	a.mu.Lock()
+	a.showProgress = on
+	path := a.prefsPath
+	a.mu.Unlock()
+	if path != "" {
+		data, _ := json.Marshal(map[string]bool{"show_progress": on})
+		if err := os.WriteFile(path, data, 0o600); err != nil {
+			logf("saving the display options: %v", err)
+		}
+	}
+	a.sendState()
+}
+
 // ---- the state
 
 func (a *app) sendState() {
@@ -344,16 +396,17 @@ func (a *app) sendState() {
 		host = u.Host
 	}
 	state := map[string]any{
-		"decks":   decks,
-		"studied": studiedToday(a.col, now),
-		"paired":  l.Token != "",
-		"host":    host,
-		"syncing": a.syncing,
-		"error":   a.syncErr,
-		"dirty":   a.col.dirty(),
-		"synced":  !a.lastSync.IsZero(),
-		"pairing": a.pairing,
-		"pairErr": a.pairErr,
+		"decks":        decks,
+		"studied":      studiedToday(a.col, now),
+		"paired":       l.Token != "",
+		"host":         host,
+		"syncing":      a.syncing,
+		"error":        a.syncErr,
+		"dirty":        a.col.dirty(),
+		"synced":       !a.lastSync.IsZero(),
+		"pairing":      a.pairing,
+		"pairErr":      a.pairErr,
+		"showProgress": a.showProgress,
 	}
 	if a.pair != nil {
 		state["code"] = a.pair.Code

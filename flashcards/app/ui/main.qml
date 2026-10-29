@@ -168,6 +168,7 @@ Rectangle {
     }
 
     readonly property bool paired: info !== null && info.paired
+    readonly property bool showProgress: info !== null && info.showProgress === true
 
     // One step up: the reviewer and the options to the deck's overview, the
     // overview to the decks, the decks out of the app.
@@ -671,6 +672,17 @@ Rectangle {
                     }
                 }
             }
+            // Options > Show progress: how far through the deck, small and to the side.
+            Text {
+                visible: root.showProgress && root.shown !== null && root.shown.progress !== undefined
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.margin
+                y: 36
+                text: root.shown && root.shown.progress !== undefined ? root.shown.progress + "%" : ""
+                color: Theme.subtle
+                font.family: fontSet.sans
+                font.pixelSize: 30
+            }
             AnkiButton {
                 visible: !root.revealed
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -801,6 +813,53 @@ Rectangle {
                             }
                             Step { text: "+"; by: 1 }
                             Step { text: "+10"; by: 10 }
+                        }
+                    }
+                }
+            }
+            // This device's display, not the deck's: applies at once.
+            Rectangle {
+                width: parent.width
+                height: display.height + 2 * 56
+                radius: 16
+                border.width: 2
+                border.color: Theme.rule
+                Column {
+                    id: display
+                    x: 56
+                    y: 56
+                    width: parent.width - 112
+                    spacing: 48
+                    Text {
+                        text: "Display"
+                        color: Theme.ink
+                        font.family: fontSet.sansSemi
+                        font.weight: Font.DemiBold
+                        font.pixelSize: 46
+                    }
+                    Item {
+                        width: parent.width
+                        height: Theme.buttonHeight
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Show progress"
+                            color: Theme.ink
+                            font.family: fontSet.sans
+                            font.pixelSize: 42
+                        }
+                        Row {
+                            anchors.right: parent.right
+                            spacing: 0
+                            Choice {
+                                text: "Off"
+                                on: !root.showProgress
+                                onClicked: root.send(8, { show_progress: false })
+                            }
+                            Choice {
+                                text: "On"
+                                on: root.showProgress
+                                onClicked: root.send(8, { show_progress: true })
+                            }
                         }
                     }
                 }
