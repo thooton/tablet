@@ -402,7 +402,8 @@ Rectangle {
             topPadding: 120
             spacing: 0
             Text {
-                width: parent.width
+                width: parent.width - 2 * Theme.margin
+                x: Theme.margin
                 horizontalAlignment: Text.AlignHCenter
                 text: root.deck ? root.deck.name : ""
                 wrapMode: Text.Wrap
@@ -540,6 +541,7 @@ Rectangle {
 
         readonly property var card: root.shown && root.shown.card ? root.shown.card : null
         property real fontScale: 1
+        property bool auxCut: false
 
         // Long cards (a word with its examples) shrink until they fit: no
         // scrolling on e-ink.
@@ -561,9 +563,20 @@ Rectangle {
         function shrink() {
             var scale = 1;
             fontScale = scale;
+            auxText.maximumLineCount = 1000;
+            auxCut = false;
             while (needed() > cardArea.height - 80 && scale > 0.45) {
                 scale = scale * 0.85;
                 fontScale = scale;
+            }
+            // Still too tall at the floor: cut the notes, not the counts.
+            var room = cardArea.height - 80 - cardText.y;
+            if (needed() > room && auxText.visible) {
+                var line = (auxText.implicitHeight - auxText.topPadding) / auxText.lineCount;
+                var free = room - (needed() - auxText.implicitHeight) - auxText.topPadding;
+                var lines = Math.floor(free / line);
+                auxCut = lines < 1;
+                auxText.maximumLineCount = Math.max(1, lines);
             }
         }
         onCardChanged: fit()
@@ -619,11 +632,12 @@ Rectangle {
                 }
                 Text {
                     id: auxText
-                    visible: root.revealed && reviewer.card !== null && reviewer.card.aux.trim() !== ""
+                    visible: root.revealed && !reviewer.auxCut && reviewer.card !== null && reviewer.card.aux.trim() !== ""
                     width: parent.width
                     topPadding: Math.round(40 * reviewer.fontScale)
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
+                    elide: Text.ElideRight
                     textFormat: Text.PlainText
                     text: reviewer.card ? reviewer.card.aux.trim() : ""
                     color: Theme.subtle

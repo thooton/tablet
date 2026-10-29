@@ -199,7 +199,7 @@ apart use `  |  `, never `·`.
 3. The deck list's counts don't refresh by themselves when a learning card
    comes due (only the overview rechecks); they update on the next sync or
    screen change. Is that fine?
-4. A card that is still too tall at the smallest size runs under the bottom
+4. (Notes are now cut with … when a card is still too tall at the smallest size; front and back are not.) A card whose front and back alone are too tall runs under the bottom
    bar. Should there be a smaller floor, or is clipping acceptable for such
    rare cards?
 5. While the reviewer or Statistics waits for the backend, the area under
