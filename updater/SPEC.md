@@ -115,7 +115,8 @@ drawn. If the list shrinks, the page shown is never past the last one.
 
 ### What's New (a box over the list)
 
-Opened by tapping a row (or a busy capsule). A black-bordered box 58 px from
+Opened by tapping a row (or a busy capsule). Everything under the header is
+blanked to white, so no part of the list or notice shows around the box. A black-bordered box 58 px from
 the sides and 200 px from the top, never taller than the screen less 400 px.
 
 - Top: the app's name (elided) and × on the right, over a black rule.

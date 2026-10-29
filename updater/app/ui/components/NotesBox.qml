@@ -18,6 +18,13 @@ Item {
     readonly property string action: busy ? "" : app.status === "get" ? "GET"
                                      : app.status === "update" ? "UPDATE" : "INSTALL AGAIN"
 
+    // white over the list, so nothing of it shows around the box
+    Rectangle {
+        y: 140
+        width: parent.width
+        height: parent.height - 140
+        color: Theme.paper
+    }
     MouseArea {
         anchors.fill: parent
         onClicked: box.dismissed()
