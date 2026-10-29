@@ -127,8 +127,8 @@ every 1.5 s).
   device, in that deck.
 - A second card, "Display": "Show progress" with Off | On (off by default).
   It applies at once, is kept on this tablet for every deck (prefs.json),
-  and is not synced or undone by Cancel. When on, the reviewer shows `N%`
-  in small grey at the right of the counts: 100% minus the share of the
+  and is not synced or undone by Cancel. When on, the reviewer shows `N.NN%`
+  (two decimals, rounded down) in small grey at the right of the counts: 100% minus the share of the
   deck's cards still New.
 - Bottom bar: Cancel (back to the overview, nothing changed) and Save
   (heavier outline: saves, syncs, back to the overview with the new New

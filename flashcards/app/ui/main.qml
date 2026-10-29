@@ -678,7 +678,7 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.margin
                 y: 36
-                text: root.shown && root.shown.progress !== undefined ? root.shown.progress + "%" : ""
+                text: root.shown && root.shown.progress !== undefined ? (root.shown.progress / 100).toFixed(2) + "%" : ""
                 color: Theme.subtle
                 font.family: fontSet.sans
                 font.pixelSize: 30

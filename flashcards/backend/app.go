@@ -341,10 +341,11 @@ func (a *app) startPairing() {
 }
 
 // progressOf is how far through a deck: 100% minus the share of its cards
-// still New, rounded down (the phone's ReviewSession.progress).
+// still New, in hundredths of a percent, rounded down (the phone's
+// ReviewSession.progress).
 func progressOf(cards []*card) int {
 	if len(cards) == 0 {
-		return 100
+		return 10000
 	}
 	fresh := 0
 	for _, k := range cards {
@@ -352,7 +353,7 @@ func progressOf(cards []*card) int {
 			fresh++
 		}
 	}
-	return (len(cards) - fresh) * 100 / len(cards)
+	return (len(cards) - fresh) * 10000 / len(cards)
 }
 
 // loadPrefs reads the display options; a missing or unreadable file is all off.
