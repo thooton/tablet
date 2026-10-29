@@ -20,10 +20,13 @@ header+body protocol (over TCP here).
                         shot FILE, quit. Each is answered "ok" or "error ...".
 
 Needs PySide6 (pip install PySide6) and Go. Mouse clicks act as taps; S
-saves a screenshot to build/emulator/, Esc quits. Biblioteca has its
-own, older emulator with UI tests in spanish-stories/emulator/.
+saves a screenshot to build/emulator/, Esc quits.
+
+UI tests import it and drive an Emulator themselves (see
+spanish-stories/emulator/test_app.py).
 """
 import argparse
+import json
 import os
 import random
 import string
@@ -31,6 +34,14 @@ import struct
 import subprocess
 import sys
 from pathlib import Path
+
+from PySide6.QtCore import (QByteArray, QEvent, QMetaObject, QObject, QPointF, QProcess, QProcessEnvironment,
+                            Property, QResource, Qt, QTimer, QUrl, Signal, Slot)
+from PySide6.QtGui import QGuiApplication, QImage, QKeyEvent, QKeySequence, QMouseEvent, QShortcut
+from PySide6.QtNetwork import QHostAddress, QTcpServer
+from PySide6.QtQml import qmlRegisterType
+from PySide6.QtQuick import QQuickView
+import shiboken6
 
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
@@ -42,6 +53,182 @@ MSG_TERMINATE, MSG_NEW_COORDINATOR = -1, -2
 
 def log(*args):
     print("[emulator]", *args, flush=True)
+
+
+class Bridge(QObject):
+    """Plays AppLoad's part: owns the backend process and its socket."""
+
+    def __init__(self, verbose=False):
+        super().__init__()
+        self.verbose = verbose
+        self.endpoints, self.socket, self.buffer, self.process = [], None, b"", None
+        self.server = QTcpServer(self)
+        self.server.newConnection.connect(self.connected)
+        if not self.server.listen(QHostAddress.LocalHost, 0):
+            raise RuntimeError("cannot listen on localhost")
+
+    def start(self, exe: Path, cwd: Path, env: dict, delay_ms=0):
+        def start():
+            self.process = QProcess(self)
+            penv = QProcessEnvironment.systemEnvironment()
+            for k, v in env.items():
+                penv.insert(k, v)
+            self.process.setProcessEnvironment(penv)
+            self.process.setWorkingDirectory(str(cwd))
+            self.process.setProcessChannelMode(QProcess.ForwardedChannels)
+            self.process.finished.connect(lambda code, status: log(f"backend exited with code {code}"))
+            self.process.start(str(exe), [f"tcp:127.0.0.1:{self.server.serverPort()}"])
+            if not self.process.waitForStarted(5000):
+                log("backend failed to start:", self.process.errorString())
+
+        if delay_ms:
+            QTimer.singleShot(delay_ms, start)
+        else:
+            start()
+
+    def live(self):
+        self.endpoints = [e for e in self.endpoints if shiboken6.isValid(e)]
+        return self.endpoints
+
+    def connected(self):
+        self.socket = self.server.nextPendingConnection()
+        self.socket.readyRead.connect(self.ready)
+        if self.live():
+            self.write(MSG_NEW_COORDINATOR, str(len(self.endpoints)))
+
+    def register(self, e):
+        self.endpoints.append(e)
+        self.send(MSG_NEW_COORDINATOR, str(len(self.live())))
+
+    def send(self, t, body):
+        if self.socket is None:
+            # Same as AppLoad: messages sent before the backend connects are lost.
+            log(f"no backend yet, dropping message {t}")
+            return
+        self.write(t, body)
+
+    def write(self, t, body):
+        data = body.encode()
+        if self.verbose:
+            log(f"-> {t}: {body[:160]}")
+        self.socket.write(QByteArray(struct.pack("<ii", t, len(data)) + data))
+        self.socket.flush()
+
+    def ready(self):
+        self.buffer += bytes(self.socket.readAll().data())
+        while len(self.buffer) >= 8:
+            t, n = struct.unpack("<ii", self.buffer[:8])
+            if len(self.buffer) < 8 + n:
+                break
+            body = self.buffer[8:8 + n].decode()
+            self.buffer = self.buffer[8 + n:]
+            if self.verbose:
+                log(f"<- {t}: {body[:160]}")
+            for e in list(self.live()):
+                e.messageReceived.emit(t, body)
+
+    def terminate(self):
+        if self.socket is not None:
+            self.write(MSG_TERMINATE, "close")
+        if self.process is not None and self.process.state() != QProcess.NotRunning:
+            if not self.process.waitForFinished(3000):
+                self.process.kill()
+                self.process.waitForFinished(1000)
+        self.socket = None
+
+
+BRIDGE = None
+
+
+class AppLoadEndpoint(QObject):
+    """Stand-in for the `AppLoad` QML type from net.asivery.AppLoad 1.0."""
+
+    messageReceived = Signal(int, str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._id = ""
+
+    def _get(self):
+        return self._id
+
+    def _set(self, v):
+        self._id = v
+        BRIDGE.register(self)
+
+    applicationID = Property(str, _get, _set)
+
+    @Slot(int, str)
+    def sendMessage(self, t, contents):
+        BRIDGE.send(t, contents)
+
+    @Slot()
+    def terminate(self):
+        BRIDGE.terminate()
+
+
+class Emulator:
+    """The app in app_dir, its QML in a window (view) and its backend built
+    for this computer and started with env, backend_delay ms late if given.
+    Needs a QGuiApplication."""
+
+    def __init__(self, app_dir: Path, env=None, scale=1.0, verbose=False, backend_delay=0):
+        global BRIDGE
+        app_dir = Path(app_dir).resolve()
+        self.build = app_dir / "build" / "emulator"
+        self.build.mkdir(parents=True, exist_ok=True)
+        manifest = json.loads((app_dir / "app" / "manifest.json").read_text())
+        rcc = self.build / "resources.rcc"
+        appbuild.build_rcc(app_dir / "app" / "application.qrc", rcc)
+
+        BRIDGE = self.bridge = Bridge(verbose)
+        qmlRegisterType(AppLoadEndpoint, "net.asivery.AppLoad", 1, 0, "AppLoad")
+        # AppLoad starts the backend first, then loads the frontend.
+        if manifest.get("loadsBackend"):
+            entry = self.build / "entry"
+            go_env = dict(os.environ, CGO_ENABLED="0")
+            go_env.pop("GOOS", None)
+            go_env.pop("GOARCH", None)
+            subprocess.run(["go", "build", "-o", str(entry), "."], cwd=app_dir / "backend", env=go_env, check=True)
+            self.bridge.start(entry, app_dir, env or {}, backend_delay)
+
+        prefix = "".join(random.choice(string.ascii_uppercase) for _ in range(10))
+        if not QResource.registerResource(str(rcc), "/" + prefix):
+            raise RuntimeError(f"cannot register {rcc}")
+        self.closed = False
+        self.view = QQuickView()
+        self.view.setTitle(f"{manifest['name']} - reMarkable 2 emulator")
+        self.view.setResizeMode(QQuickView.SizeRootObjectToView)
+        self.view.setInitialProperties({"appUrl": QUrl(f"qrc:/{prefix}{manifest['entry']}"), "deviceScale": scale})
+        self.view.setSource(QUrl.fromLocalFile(str(TOOLS / "emulator_host.qml")))
+        for err in self.view.errors():
+            log("QML error:", err.toString())
+        self.view.resize(round(SCREEN_W * scale), round(SCREEN_H * scale))
+        self.host = self.view.rootObject()
+        self.host.appClosed.connect(self._closed)
+
+    @property
+    def app(self):
+        loader = self.host.findChild(QObject, "appLoader")
+        return loader.property("item") if loader else None
+
+    def _closed(self):
+        # AppLoad calls unloading() and then destroys the frontend.
+        QMetaObject.invokeMethod(self.app, "unloading")
+        self.closed = True
+        self.host.setProperty("closed", True)
+        self.host.findChild(QObject, "appLoader").setProperty("active", False)
+        log("app closed")
+
+    def screenshot(self, path: Path) -> Path:
+        """Saves the screen, in greys as e-ink shows it."""
+        img = self.view.grabWindow().convertToFormat(QImage.Format_Grayscale8)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        img.save(str(path))
+        return path
+
+    def shutdown(self):
+        self.bridge.terminate()
 
 
 def main() -> int:
@@ -59,148 +246,15 @@ def main() -> int:
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-    from PySide6.QtCore import (QByteArray, QEvent, QMetaObject, QObject, QPointF, QProcess,
-                                QProcessEnvironment, Property, QResource, Qt, QTimer, QUrl, Signal, Slot)
-    from PySide6.QtGui import QGuiApplication, QImage, QKeyEvent, QKeySequence, QMouseEvent, QShortcut
-    from PySide6.QtNetwork import QHostAddress, QTcpServer
-    from PySide6.QtQml import qmlRegisterType
-    from PySide6.QtQuick import QQuickView
-
-    app_dir = args.app.resolve()
-    build = app_dir / "build" / "emulator"
-    build.mkdir(parents=True, exist_ok=True)
-    manifest = __import__("json").loads((app_dir / "app" / "manifest.json").read_text())
-    rcc = build / "resources.rcc"
-    appbuild.build_rcc(app_dir / "app" / "application.qrc", rcc)
-    entry = None
-    if manifest.get("loadsBackend"):
-        entry = build / "entry"
-        env = dict(os.environ, CGO_ENABLED="0")
-        env.pop("GOOS", None)
-        env.pop("GOARCH", None)
-        subprocess.run(["go", "build", "-o", str(entry), "."], cwd=app_dir / "backend", env=env, check=True)
-
     qapp = QGuiApplication(sys.argv[:1])
-
-    class Bridge(QObject):
-        def __init__(self):
-            super().__init__()
-            self.endpoints, self.socket, self.buffer, self.process = [], None, b"", None
-            self.server = QTcpServer(self)
-            self.server.newConnection.connect(self.connected)
-            self.server.listen(QHostAddress.LocalHost, 0)
-
-        def start(self, exe, env):
-            self.process = QProcess(self)
-            penv = QProcessEnvironment.systemEnvironment()
-            for k, v in env.items():
-                penv.insert(k, v)
-            self.process.setProcessEnvironment(penv)
-            self.process.setWorkingDirectory(str(app_dir))
-            self.process.setProcessChannelMode(QProcess.ForwardedChannels)
-            self.process.start(str(exe), [f"tcp:127.0.0.1:{self.server.serverPort()}"])
-
-        def connected(self):
-            self.socket = self.server.nextPendingConnection()
-            self.socket.readyRead.connect(self.ready)
-            if self.endpoints:
-                self.write(MSG_NEW_COORDINATOR, str(len(self.endpoints)))
-
-        def register(self, e):
-            self.endpoints.append(e)
-            self.send(MSG_NEW_COORDINATOR, str(len(self.endpoints)))
-
-        def send(self, t, body):
-            if self.socket is None:
-                log(f"no backend yet, dropping message {t}")
-                return
-            self.write(t, body)
-
-        def write(self, t, body):
-            data = body.encode()
-            if args.verbose:
-                log(f"-> {t}: {body[:160]}")
-            self.socket.write(QByteArray(struct.pack("<ii", t, len(data)) + data))
-            self.socket.flush()
-
-        def ready(self):
-            self.buffer += bytes(self.socket.readAll().data())
-            while len(self.buffer) >= 8:
-                t, n = struct.unpack("<ii", self.buffer[:8])
-                if len(self.buffer) < 8 + n:
-                    break
-                body = self.buffer[8:8 + n].decode()
-                self.buffer = self.buffer[8 + n:]
-                if args.verbose:
-                    log(f"<- {t}: {body[:160]}")
-                for e in self.endpoints:
-                    e.messageReceived.emit(t, body)
-
-        def terminate(self):
-            if self.socket is not None:
-                self.write(MSG_TERMINATE, "close")
-            if self.process is not None and not self.process.waitForFinished(3000):
-                self.process.kill()
-
-    bridge = Bridge()
-
-    class AppLoadEndpoint(QObject):
-        messageReceived = Signal(int, str)
-
-        def __init__(self, parent=None):
-            super().__init__(parent)
-            self._id = ""
-
-        def _get(self):
-            return self._id
-
-        def _set(self, v):
-            self._id = v
-            bridge.register(self)
-
-        applicationID = Property(str, _get, _set)
-
-        @Slot(int, str)
-        def sendMessage(self, t, contents):
-            bridge.send(t, contents)
-
-        @Slot()
-        def terminate(self):
-            bridge.terminate()
-
-    qmlRegisterType(AppLoadEndpoint, "net.asivery.AppLoad", 1, 0, "AppLoad")
-    if entry:
-        bridge.start(entry, dict(kv.split("=", 1) for kv in args.env))
-
-    prefix = "".join(random.choice(string.ascii_uppercase) for _ in range(10))
-    QResource.registerResource(str(rcc), "/" + prefix)
     scale = args.scale or (1.0 if args.offscreen else
                            min(1.0, (qapp.primaryScreen().availableGeometry().height() - 60) / SCREEN_H))
-    view = QQuickView()
-    view.setTitle(f"{manifest['name']} - reMarkable 2 emulator")
-    view.setResizeMode(QQuickView.SizeRootObjectToView)
-    view.setInitialProperties({"appUrl": QUrl(f"qrc:/{prefix}{manifest['entry']}"), "deviceScale": scale})
-    view.setSource(QUrl.fromLocalFile(str(TOOLS / "emulator_host.qml")))
-    for err in view.errors():
-        log("QML error:", err.toString())
-    view.resize(round(SCREEN_W * scale), round(SCREEN_H * scale))
-    host = view.rootObject()
-
-    def closed():
-        loader = host.findChild(QObject, "appLoader")
-        QMetaObject.invokeMethod(loader.property("item"), "unloading")
-        host.setProperty("closed", True)
-        loader.setProperty("active", False)
-        log("app closed")
-        QTimer.singleShot(800, qapp.quit)
-
-    host.appClosed.connect(closed)
+    emu = Emulator(args.app, dict(kv.split("=", 1) for kv in args.env), scale, args.verbose)
+    view = emu.view
+    emu.host.appClosed.connect(lambda: QTimer.singleShot(800, qapp.quit))
 
     def shoot(path):
-        img = view.grabWindow().convertToFormat(QImage.Format_Grayscale8)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        img.save(str(path))
-        log("saved", path)
+        log("saved", emu.screenshot(path))
 
     def tap(x, y):
         pos = QPointF(x * scale, y * scale)
@@ -304,13 +358,13 @@ def main() -> int:
 
     def save():
         shots[0] += 1
-        shoot(build / f"screenshot-{shots[0]}.png")
+        shoot(emu.build / f"screenshot-{shots[0]}.png")
 
     QShortcut(QKeySequence("S"), view, activated=save)
     QShortcut(QKeySequence("Escape"), view, activated=qapp.quit)
     view.show()
     code = qapp.exec()
-    bridge.terminate()
+    emu.shutdown()
     return code
 
 

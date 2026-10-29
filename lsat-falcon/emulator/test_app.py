@@ -10,13 +10,17 @@ passed.
 import argparse
 import json
 import random
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+ROOT = Path(__file__).resolve().parent.parent
+BUILD = ROOT / "build" / "emulator"
+sys.path.insert(0, str(ROOT.parent / "tools"))
 
-from PySide6.QtCore import QObject, QPoint, QPointF, Qt, qInstallMessageHandler  # noqa: E402
+from PySide6.QtCore import QPoint, QPointF, Qt, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QJSValue, QQmlExpression  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
@@ -24,6 +28,17 @@ from PySide6.QtTest import QTest  # noqa: E402
 import emulator  # noqa: E402
 
 WARNINGS = []
+
+
+def open_app(state: Path, fresh=True):
+    """The app in the emulator, with the deck compiled once from deck/ (see
+    tools/build_data.py) and its state kept in state."""
+    data = ROOT / "build" / "data"
+    if not (data / "meta.json").exists():
+        subprocess.run([sys.executable, str(ROOT / "tools" / "build_data.py"), "--out", str(data)], check=True)
+    if fresh:
+        shutil.rmtree(state, ignore_errors=True)
+    return emulator.Emulator(ROOT, {"LSAT_FALCON_ROOT": str(data.parent), "LSAT_FALCON_DATA": str(state)})
 
 
 def on_message(mode, context, message):
@@ -157,13 +172,12 @@ def run(d: Driver, sample: int):
 
     print(f"rendering {sample} random questions")
     random.seed(1)
-    n = d.js("drill.deck.length")
     picks = random.sample(range(7626), sample)
     before = len(WARNINGS)
     for i in picks:
         d.js(f"drill.update({{ heldOut: true }}), drill.openQuestion({i}), drill.openQuestion({i})")
         d.wait_until(f"question {i}", lambda: d.js(f"drill.question !== null && drill.question.i === {i}"), 5)
-        d.js(f"drill.select(drill.question.correct)")
+        d.js("drill.select(drill.question.correct)")
         d.wait(40)
     d.check(len(WARNINGS) == before, f"{sample} questions render with their explanations, no QML warnings")
     d.js("drill.update({ heldOut: false })")
@@ -197,14 +211,14 @@ def run(d: Driver, sample: int):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--shots", type=Path, default=emulator.BUILD / "test-shots")
+    ap.add_argument("--shots", type=Path, default=BUILD / "test-shots")
     ap.add_argument("--sample", type=int, default=150)
     args = ap.parse_args()
 
     app = QGuiApplication(sys.argv[:1])
     qInstallMessageHandler(on_message)
-    state_dir = emulator.BUILD / "test-state"
-    emu = emulator.Emulator(state_dir, fresh=True, scale=1.0)
+    state_dir = BUILD / "test-state"
+    emu = open_app(state_dir)
     emu.view.show()
     d = Driver(emu, args.shots)
     d.emu_state = state_dir

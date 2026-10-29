@@ -94,27 +94,25 @@ Rectangle {
                 }
             }
         }
-        Rectangle {
+        Item {
             id: aaButton
             x: menuIcon.x - 60 - width
             anchors.verticalCenter: parent.verticalCenter
             width: aa.implicitWidth + 16
             height: aa.implicitHeight
-            color: aaArea.lit ? Theme.ink : "transparent"
             Text {
                 id: aa
                 objectName: "textSettingsButton"
                 anchors.centerIn: parent
                 text: "Aa"
-                color: aaArea.lit ? Theme.white : Theme.ink
+                color: Theme.ink
                 font.family: bar.fonts.serif
                 font.pixelSize: 42
             }
-            FlashArea {
-                id: aaArea
+            MouseArea {
                 anchors.fill: parent
                 anchors.margins: -24
-                onTapped: bar.textSettings()
+                onClicked: bar.textSettings()
             }
         }
         IconButton {

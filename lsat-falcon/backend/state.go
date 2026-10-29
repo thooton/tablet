@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // What the web app keeps in localStorage and the URL, kept in
@@ -27,18 +28,10 @@ func loadState(path string) *State {
 	return state
 }
 
-// save writes atomically so a crash or power loss never leaves a torn file.
 func (s *State) save(path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return appload.WriteFile(path, data, 0o644)
 }

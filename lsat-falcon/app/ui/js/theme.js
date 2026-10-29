@@ -14,9 +14,6 @@ function px(v) {
     return Math.round(v * SCALE);
 }
 
-var screenWidth = 1404;
-var screenHeight = 1872;
-
 // Colours. E-ink has no hue and fast refreshes may drop light greys, so the
 // palette is rebuilt in grey with one rule: anything that carries state
 // (selected, answered, correct, the primary button) is black on white or
@@ -31,7 +28,6 @@ var accent = "#555555";      // section headings and text links (lavender on the
 var chip = "#e4e4e4";
 var line = "#c2c2c2";
 var navy = "#000000";        // filled buttons and selected chips
-var logo = "#000000";
 var correct = "#000000";
 var wrong = "#000000";
 var quote = "#e4e4e4";       // a passage phrase the stem quotes

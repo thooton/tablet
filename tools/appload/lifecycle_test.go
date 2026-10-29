@@ -1,4 +1,4 @@
-package main
+package appload
 
 import (
 	"os"
@@ -17,7 +17,7 @@ func TestLifecycleExitsOnlyWhenReplacedAndIdle(t *testing.T) {
 	if l.shouldExit(now.Add(time.Minute)) {
 		t.Fatal("exits with a frontend attached and nothing replaced")
 	}
-	l.seen(msgSystemLostCoordinator, []byte("0"))
+	l.seen(MsgLostCoordinator, []byte("0"))
 	if l.shouldExit(time.Now().Add(time.Minute)) {
 		t.Fatal("exits though its binary is unchanged")
 	}
@@ -36,7 +36,7 @@ func TestLifecycleExitsOnlyWhenReplacedAndIdle(t *testing.T) {
 		t.Fatal("exits while busy")
 	}
 	busy = false
-	l.seen(msgSystemNewCoordinator, []byte("1"))
+	l.seen(MsgNewCoordinator, []byte("1"))
 	if l.shouldExit(time.Now().Add(time.Minute)) {
 		t.Fatal("exits with a frontend attached again")
 	}

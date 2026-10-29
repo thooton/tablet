@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 // Message types exchanged with the QML frontend (bodies are JSON).
@@ -202,7 +204,7 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 		}
 		return nil
 
-	case msgSystemNewCoordinator, msgSystemLostCoordinator, msgSystemTerminate:
+	case appload.MsgNewCoordinator, appload.MsgLostCoordinator:
 		return nil
 	}
 	return []reply{errorReply(msgType, fmt.Sprintf("unknown message type %d", msgType))}

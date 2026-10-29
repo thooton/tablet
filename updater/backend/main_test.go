@@ -15,6 +15,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/thooton/tablet/tools/appload"
 )
 
 func TestCompareVersions(t *testing.T) {
@@ -289,9 +291,9 @@ func TestDoneMarkClears(t *testing.T) {
 	f.publish(m)
 
 	home := t.TempDir()
-	appload := filepath.Join(home, "appload")
+	apploadDir := filepath.Join(home, "appload")
 	rec := &recorder{}
-	app := newApp(newRelease(f.server.URL), appload, home, filepath.Join(home, "cache"), rec.send)
+	app := newApp(newRelease(f.server.URL), apploadDir, home, filepath.Join(home, "cache"), rec.send)
 	defer app.close()
 
 	app.handle(msgCheck, nil)
@@ -326,7 +328,7 @@ func TestDoneMarkClears(t *testing.T) {
 
 	// Reopening a moment later (what AppLoad and the UI send on opening)
 	// shows the state as it is: DONE stays.
-	app.handle(msgSystemNewCoordinator, []byte("1"))
+	app.handle(appload.MsgNewCoordinator, []byte("1"))
 	app.handle(msgState, nil)
 	time.Sleep(200 * time.Millisecond)
 	if s := rec.last(); s.Checking || find(s, "demo").Job == nil || find(s, "demo").Job.Phase != "done" {

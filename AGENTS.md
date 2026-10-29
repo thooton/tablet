@@ -17,10 +17,13 @@ has its own `AGENTS.md`; read it before changing that app.
   command center.
 - `updater/`: Updater, which installs and updates every app here from this
   repository's releases (AppLoad id `updater`).
-- `tools/`: what the apps share: `appbuild.py` (rcc, the Go backend for both
-  CPUs, the release archive) and `emulator.py` (runs any app on a computer), and `make_icons.py`
-  (draws the Biblioteca, Flashcards and Updater icons), and `drive.py`
-  (drives an app in `emulator.py --control`, for QA).
+- `tools/`: what the apps share: `appbuild.py` (builds an app: rcc, the Go
+  backend for both CPUs, the release archive), `appload/` (the Go package
+  every backend runs on: AppLoad's protocol and the backend's lifecycle),
+  `emulator.py` (runs any app on a computer, and is what the UI tests
+  drive), `fonts/` (fonts several apps bundle), `make_icons.py` (draws
+  the Biblioteca, Flashcards and Updater icons) and `drive.py` (drives an
+  app in `emulator.py --control`, for QA).
 
 This is not the phone's Tablet app (`tablet/` in thooton/sonim), which
 browses the tablet's documents through the Delta command center. The tablet
@@ -67,8 +70,10 @@ The Updater and CI rely on this layout. An app in `<dir>/`:
   app's data find it by that. AppLoad ignores keys it doesn't
   know.
 - `app/application.qrc`: the QML, fonts and images, compiled with Qt 6's
-  `rcc` into `resources.rcc`. `app/icon.png` (128×128) is AppLoad's icon
-  and the Updater's.
+  `rcc` into `resources.rcc`. A font more than one app bundles (IBM Plex
+  Sans) lives once in `tools/fonts/` and is listed under an alias:
+  `<file alias="ui/fonts/X.ttf">../../tools/fonts/X.ttf</file>`.
+  `app/icon.png` (128×128) is AppLoad's icon and the Updater's.
 - `backend/` (if `loadsBackend`): a Go program, built for `armv7` (reMarkable
   1 and 2) and `aarch64` (Paper Pro) as `app/backend/entry-<arch>`.
 - `package/install.sh`: runs on the tablet from `/home/root/<dir>/`, the
@@ -82,7 +87,7 @@ The Updater and CI rely on this layout. An app in `<dir>/`:
   fails. `uninstall.sh` and `README.txt` beside it.
 - `tools/build.py`: writes `dist/<dir>/` (what lands in `/home/root/<dir>`)
   and `dist/<dir>.tar.gz`, which unpacks to `<dir>/...`. Use
-  `tools/appbuild.py`, as `updater/tools/build.py` does. `dist/` is not
+  `tools/appbuild.py`'s `build_app()`, as `updater/tools/build.py` does. `dist/` is not
   committed.
 
 A new app in this shape is built and published as soon as it is pushed,
@@ -101,17 +106,20 @@ versions). The root item needs `signal close` and `function unloading()`,
 and talks to its backend through `AppLoad { applicationID: "<id>" }`
 (`sendMessage(type, json)` / `onMessageReceived`). AppLoad sends the backend
 -2 with the number of frontends when one attaches and -3 when one goes; see
-`spanish-stories/backend/transport.go` for the wire format.
+`tools/appload/transport.go` for the wire format.
 
 **Never call `terminate()` on the AppLoad endpoint, and never let a backend
 exit while its app is open**, though AppLoad's README suggests calling it in
 `unloading()`. Either makes AppLoad unload the app from its socket thread
 instead of the GUI thread, which crashes the tablet's UI and restarts it.
 The backend stays running after the window closes and AppLoad reuses it on
-the next open. Copy `lifecycle.go` from either backend: it exits only when
-install.sh has replaced the binary and no frontend has been attached for a
-few seconds, so an update takes effect on the next open. Backends are Go
-with `CGO_ENABLED=0` and no third-party modules.
+the next open. Every backend's `main` runs on the shared Go package
+`tools/appload` (`appload.Connect`, then `appload.Serve`), which also
+exits it only when install.sh has replaced the binary and no frontend has
+been attached for a few seconds, so an update takes effect on the next
+open. A backend's `go.mod` reaches it with a `replace` to
+`../../tools/appload`. Backends are Go with `CGO_ENABLED=0` and no
+third-party modules.
 
 After an update AppLoad needs Reload (in its menu, with every app closed)
 before it opens the new QML.

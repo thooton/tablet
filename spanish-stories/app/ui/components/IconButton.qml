@@ -1,8 +1,8 @@
 import QtQuick
-import "../js/theme.js" as Theme
 
 // One of the mockup's line icons (back, menu, close, grab) with a tap area
-// a little larger than the drawing. Tapped, it flashes white on black.
+// a little larger than the drawing. A tap acts at once, with no flash: on
+// e-ink an inverted flash costs two refreshes.
 Item {
     id: btn
     property string icon
@@ -12,21 +12,14 @@ Item {
     implicitWidth: image.implicitWidth
     implicitHeight: image.implicitHeight
 
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: -8
-        visible: area.lit
-        color: Theme.ink
-    }
     Image {
         id: image
         anchors.fill: parent
-        source: "../images/" + btn.icon + (area.lit ? "-white" : "") + ".png"
+        source: "../images/" + btn.icon + ".png"
     }
-    FlashArea {
-        id: area
+    MouseArea {
         anchors.fill: parent
         anchors.margins: -btn.slop
-        onTapped: btn.clicked()
+        onClicked: btn.clicked()
     }
 }
