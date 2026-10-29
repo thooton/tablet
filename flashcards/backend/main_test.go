@@ -284,3 +284,20 @@ func TestSyncDropsRemovedCards(t *testing.T) {
 		t.Fatalf("the removed card stayed: %d in the deck, %d kept", len(c.inDeck["d"]), len(c.Cards))
 	}
 }
+
+func TestSyncDropsRemovedCardWithWeakMemory(t *testing.T) {
+	c := testCollection(2, auto)
+	_, sent := c.outgoing()
+	gone := *c.inDeck["d"][0]
+	zero, ten := 0.0, 5.0
+	gone.State, gone.Last, gone.Stability, gone.Difficulty = stateReview, 1, &zero, &ten
+	gone.Step = nil
+	gone.Deleted = true
+	reply, _ := json.Marshal(map[string]any{"usn": 7, "decks": []any{}, "cards": []any{&gone}})
+	if err := c.apply(reply, sent); err != nil {
+		t.Fatal(err)
+	}
+	if c.cards[gone.ID] != nil || len(c.inDeck["d"]) != 1 {
+		t.Fatalf("the removed card stayed: %d in the deck", len(c.inDeck["d"]))
+	}
+}

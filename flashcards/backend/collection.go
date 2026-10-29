@@ -235,7 +235,7 @@ func (c *collection) apply(reply []byte, sent sentMods) error {
 		}
 	}
 	for _, k := range got.Cards {
-		if k == nil || k.ID == "" || !validMemory(k.memory) {
+		if k == nil || k.ID == "" || (!k.Deleted && !validMemory(k.memory)) {
 			continue
 		}
 		k.Dirty = false
