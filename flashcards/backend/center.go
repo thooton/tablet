@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apploadrt"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -44,7 +45,7 @@ func (c *center) login() login {
 		json.Unmarshal(data, &l)
 	}
 	if l.Server == "" {
-		l.Server = env("FLASHCARDS_SERVER", defaultServer)
+		l.Server = apploadrt.Env("FLASHCARDS_SERVER", defaultServer)
 	}
 	return l
 }

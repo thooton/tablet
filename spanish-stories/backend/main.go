@@ -8,16 +8,14 @@
 package main
 
 import (
+	"apploadrt"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func logf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "[spanish-reader] "+format+"\n", args...)
-}
+var logf = apploadrt.Logger("spanish-reader")
 
 func appRoot() string {
 	if root := os.Getenv("SPANISH_READER_ROOT"); root != "" {
@@ -55,30 +53,13 @@ func statePath() string {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: entry <unix socket path | tcp:host:port>")
-		os.Exit(2)
-	}
-	conn, err := dial(os.Args[1])
-	if err != nil {
-		logf("cannot connect to %s: %v", os.Args[1], err)
-		os.Exit(1)
-	}
-	defer conn.close()
+	conn := apploadrt.Connect(logf)
+	defer conn.Close()
 
 	root := appRoot()
 	app := newApp(storyDirs(root), statePath())
 	logf("started; app root %s, state %s", root, app.statePath)
-	life := newLifecycle(executable(), nil)
-	go life.watch()
-
-	for {
-		msgType, body, err := conn.recv()
-		if err != nil {
-			logf("connection closed: %v", err)
-			return
-		}
-		life.seen(msgType, body)
+	apploadrt.Serve(conn, nil, logf, func(msgType int32, body []byte) error {
 		for _, r := range app.handle(msgType, body) {
 			data, err := json.Marshal(r.Body)
 			if err != nil {
@@ -88,13 +69,11 @@ func main() {
 			// Never exit here: a backend that quits while its app is
 			// open crashes the tablet's UI. A broken connection ends the
 			// loop at the next recv.
-			if err := conn.send(r.Type, data); err != nil {
+			if err := conn.Send(r.Type, data); err != nil {
 				logf("cannot send reply %d (%d bytes): %v", r.Type, len(data), err)
 				break
 			}
 		}
-		if msgType == msgSystemTerminate {
-			return
-		}
-	}
+		return nil
+	})
 }

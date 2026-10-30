@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apploadrt"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -202,7 +203,7 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 		}
 		return nil
 
-	case msgSystemNewCoordinator, msgSystemLostCoordinator, msgSystemTerminate:
+	case apploadrt.MsgNewCoordinator, apploadrt.MsgLostCoordinator, apploadrt.MsgTerminate:
 		return nil
 	}
 	return []reply{errorReply(msgType, fmt.Sprintf("unknown message type %d", msgType))}
