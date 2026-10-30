@@ -3,8 +3,8 @@ import "../js/theme.js" as Theme
 import "../js/deck.js" as Deck
 
 // The stacked passage and question of a practice test — and, in review, the
-// explanation — in one pager. A reading-comp question other than the first
-// of its passage opens on the question, with the passage a swipe back.
+// explanation — in one pager. A reading-comp question opens on the question,
+// with the passage a swipe back.
 Pager {
     id: panes
     property var question: null
@@ -40,10 +40,18 @@ Pager {
         strikeMode = false;
         quote = null;
         layout();
-        if (question && question.isRC && siblings.indexOf(question.i) > 0)
+        if (question && question.isRC) {
             reveal(questionPane, -Theme.px(20), false);
-        else
+            settling.restart();
+        } else {
             reset();
+        }
+    }
+    // A long passage finishes laying out after the first pass, which moves
+    // the question: land on it again until the page has settled.
+    Timer {
+        id: settling
+        interval: 400
     }
     function showQuote(text) {
         quote = { text: text, hit: quote && quote.text === text ? quote.hit + 1 : 0,
@@ -59,6 +67,10 @@ Pager {
     Item {
         width: panes.width
         height: column.height + Theme.px(24)
+        onHeightChanged: if (settling.running && panes.question && panes.question.isRC) Qt.callLater(function () {
+            panes.layout();
+            panes.reveal(questionPane, -Theme.px(20), false);
+        })
         Column {
             id: column
             x: Theme.px(20)

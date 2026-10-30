@@ -90,6 +90,12 @@ Rectangle {
             list.reveal(currentRow, 0, true);
     }
     onVisibleChanged: if (visible) Qt.callLater(revealCurrent)
+    // A new filter changes the rows, so the old page would start on half a
+    // row: begin the outline again at the top.
+    onVisibleTestsChanged: Qt.callLater(function () {
+        list.body.forceLayout();
+        list.reset();
+    })
 
     // ---- header
     Item {
@@ -127,7 +133,11 @@ Rectangle {
         // left cut in half at the rule.
         readonly property real shown: {
             contentY;
-            return maxY > 0 ? lineTop(contentY + height) - contentY : height;
+            if (maxY <= 0)
+                return height;
+            // On the last page the filters may end short of the pane.
+            var left = body.height - contentY;
+            return left <= height ? left : lineTop(contentY + height) - contentY;
         }
 
         // Section

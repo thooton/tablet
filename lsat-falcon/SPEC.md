@@ -170,7 +170,7 @@ test? Your answers will be lost." (Cancel, OK; a tap outside cancels); OK
 goes back to drilling. There is no close button here.
 
 Setup: test chips under "Held out" then "Drilled" (the first held-out test
-picked), "Timing" Timed | Untimed (Timed by default), "Start".
+picked), "Timing" Timed | Untimed (Timed by default; the chosen one filled black), "Start".
 
 Brief, before each section: "Section 2 of 4", the section name (or
 "Questions"), "26 questions (35 minutes)" or "(untimed)", "Begin section".
@@ -180,7 +180,8 @@ under a passage "Passage questions" chips to jump between them. Answers can
 be changed freely; nothing is marked. Footer (68 px): "Back" (disabled on
 the first), the palette (one chip per question: current black, answered
 grey, others outlined, a dot on bookmarked ones; only whole chips shown;
-tap to jump), "Finish
+tap to jump; swipe sideways to turn a page of chips, so every question is
+reachable), "Finish
 section" (hidden on the last question), "Next", which on the last question
 reads "Finish section" or, in the last section, "Finish test". Finishing
 with blanks asks "3 questions are unanswered. Finish section?" ("1 question
@@ -202,8 +203,8 @@ have says which ("Weaken (LR)", "Weaken (RC)"). Buttons "Review answers",
 
 Review: every question of the test, experimental too, answered and with its
 explanation. Footer: "Score report" (back to results), one bar per question
-(filled black if right, open if wrong, the current one outlined; tap to jump),
-"Back" and "Next", disabled at the ends.
+(filled black if right, open if wrong, the current one outlined; tap to jump; swipe
+sideways to turn a page of bars), "Back" and "Next", disabled at the ends.
 
 ### Messages
 

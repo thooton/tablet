@@ -73,9 +73,7 @@ Pager {
                         width: segLabel.implicitWidth + 2 * Theme.px(20)
                         height: Theme.px(36)
                         radius: Theme.px(6)
-                        color: on ? Theme.surface : "transparent"
-                        border.width: on ? Theme.lineWidth : 0
-                        border.color: Theme.ink
+                        color: on ? Theme.navy : "transparent"
                         onClicked: setup.timed = modelData
                         UiText {
                             id: segLabel
@@ -83,7 +81,7 @@ Pager {
                             text: modelData ? "Timed" : "Untimed"
                             size: 14
                             font.weight: Font.Medium
-                            color: parent.on ? Theme.ink : Theme.inkSoft
+                            color: parent.on ? Theme.white : Theme.inkSoft
                         }
                     }
                 }
