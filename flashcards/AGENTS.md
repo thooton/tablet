@@ -99,7 +99,7 @@ kept and its ends trimmed. Long cards shrink to fit; there is no scrolling. IBM 
 - `backend/`: `fsrs.go`, `session.go`, `collection.go` (the copy and its
   merge), `center.go` (sync and pairing), `stats.go` (the statistics),
   `app.go` (the messages),
-  `main.go`; `transport.go` and `lifecycle.go` are the Updater's.
+  `main.go`; AppLoad's protocol and when to exit are `tools/appload`'s.
 - `app/ui/`: `main.qml` (every screen), `components/` (`AnkiButton`,
   `Mark`, `Bars`, `Pie`, `Hatch`), `js/theme.js`, `js/hatch.js`.
 - `package/`, `tools/build.py`, the icon comes from the repository's `tools/make_icons.py` (Pillow).

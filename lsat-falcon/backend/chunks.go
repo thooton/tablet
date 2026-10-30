@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"unicode/utf8"
+
+	"tablet/appload"
 )
 
 // A SOCK_SEQPACKET datagram can't be larger than the socket's send buffer
@@ -33,18 +35,18 @@ func chunks(data []byte, size int) [][]byte {
 	return append(out, data)
 }
 
-func sendChunked(conn transport, r reply) error {
+func sendChunked(conn appload.Conn, r reply) error {
 	data, err := json.Marshal(r.Body)
 	if err != nil {
 		return fmt.Errorf("cannot encode reply %d: %w", r.Type, err)
 	}
 	if len(data) <= chunkSize {
-		return conn.send(r.Type, data)
+		return conn.Send(r.Type, data)
 	}
 	pieces := chunks(data, chunkSize)
 	for i, piece := range pieces {
 		head := fmt.Sprintf("%d %d %d\n", r.Type, i, len(pieces))
-		if err := conn.send(msgChunk, append([]byte(head), piece...)); err != nil {
+		if err := conn.Send(msgChunk, append([]byte(head), piece...)); err != nil {
 			return err
 		}
 	}

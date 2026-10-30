@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"tablet/appload"
 	"testing"
 	"time"
 )
@@ -220,18 +221,18 @@ func TestCheckAndInstall(t *testing.T) {
 	f.publish(m)
 
 	home := t.TempDir()
-	appload := filepath.Join(home, "appload")
+	apps := filepath.Join(home, "apps")
 	// Installed already: the Updater (older), the reader (an old copy with
 	// no version) with a story the user added.
-	os.MkdirAll(filepath.Join(appload, "updater"), 0o755)
-	os.WriteFile(filepath.Join(appload, "updater", "manifest.json"), []byte(`{"id":"updater","version":"1.0.0"}`), 0o644)
-	os.MkdirAll(filepath.Join(appload, "story-reader"), 0o755)
-	os.WriteFile(filepath.Join(appload, "story-reader", "manifest.json"), []byte(`{"id":"story-reader"}`), 0o644)
+	os.MkdirAll(filepath.Join(apps, "updater"), 0o755)
+	os.WriteFile(filepath.Join(apps, "updater", "manifest.json"), []byte(`{"id":"updater","version":"1.0.0"}`), 0o644)
+	os.MkdirAll(filepath.Join(apps, "story-reader"), 0o755)
+	os.WriteFile(filepath.Join(apps, "story-reader", "manifest.json"), []byte(`{"id":"story-reader"}`), 0o644)
 	os.MkdirAll(filepath.Join(home, "stories", "stories"), 0o755)
 	os.WriteFile(filepath.Join(home, "stories", "stories", "mine.json"), []byte("mine"), 0o644)
 
 	rec := &recorder{}
-	app := newApp(newRelease(f.server.URL), appload, home, filepath.Join(home, ".cache", "updater"), rec.send)
+	app := newApp(newRelease(f.server.URL), apps, home, filepath.Join(home, ".cache", "updater"), rec.send)
 	defer app.close()
 
 	app.handle(msgCheck, nil)
@@ -289,9 +290,9 @@ func TestDoneMarkClears(t *testing.T) {
 	f.publish(m)
 
 	home := t.TempDir()
-	appload := filepath.Join(home, "appload")
+	apps := filepath.Join(home, "apps")
 	rec := &recorder{}
-	app := newApp(newRelease(f.server.URL), appload, home, filepath.Join(home, "cache"), rec.send)
+	app := newApp(newRelease(f.server.URL), apps, home, filepath.Join(home, "cache"), rec.send)
 	defer app.close()
 
 	app.handle(msgCheck, nil)
@@ -326,7 +327,7 @@ func TestDoneMarkClears(t *testing.T) {
 
 	// Reopening a moment later (what AppLoad and the UI send on opening)
 	// shows the state as it is: DONE stays.
-	app.handle(msgSystemNewCoordinator, []byte("1"))
+	app.handle(appload.MsgNewCoordinator, []byte("1"))
 	app.handle(msgState, nil)
 	time.Sleep(200 * time.Millisecond)
 	if s := rec.last(); s.Checking || find(s, "demo").Job == nil || find(s, "demo").Job.Phase != "done" {
@@ -352,7 +353,7 @@ func TestFailedMarkClearsOnNewRelease(t *testing.T) {
 
 	home := t.TempDir()
 	rec := &recorder{}
-	app := newApp(newRelease(f.server.URL), filepath.Join(home, "appload"), home, filepath.Join(home, "cache"), rec.send)
+	app := newApp(newRelease(f.server.URL), filepath.Join(home, "apps"), home, filepath.Join(home, "cache"), rec.send)
 	defer app.close()
 	app.handle(msgCheck, nil)
 	rec.waitFor(t, "the manifest", func(s State) bool { return len(s.Apps) == 1 })
@@ -392,7 +393,7 @@ func TestInstallRefusesBadChecksum(t *testing.T) {
 
 	home := t.TempDir()
 	rec := &recorder{}
-	app := newApp(newRelease(f.server.URL), filepath.Join(home, "appload"), home, filepath.Join(home, "cache"), rec.send)
+	app := newApp(newRelease(f.server.URL), filepath.Join(home, "apps"), home, filepath.Join(home, "cache"), rec.send)
 	defer app.close()
 	app.handle(msgCheck, nil)
 	rec.waitFor(t, "the manifest", func(s State) bool { return len(s.Apps) == 1 })

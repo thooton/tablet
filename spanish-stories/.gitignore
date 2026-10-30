@@ -1,6 +1,0 @@
-build/
-__pycache__/
-*.pyc
-/backend/backend
-/backend/*.exe
-/dist/

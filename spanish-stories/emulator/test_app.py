@@ -13,7 +13,6 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from PySide6.QtCore import QObject, QPoint, QPointF, Qt  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
@@ -21,6 +20,8 @@ from PySide6.QtQml import QJSValue  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+BUILD = ROOT / "build" / "emulator"
+sys.path.insert(0, str(ROOT.parent / "tools"))
 SCREEN_W, SCREEN_H = 1404, 1872
 TEXT_SIZES = [28, 32, 36, 40, 46, 54, 64]  # app/ui/js/theme.js
 
@@ -211,8 +212,11 @@ def check_glyphs(d: Driver):
     bundled fonts, or the tablet may draw empty boxes."""
     from PySide6.QtGui import QRawFont
 
-    fonts = {name: QRawFont(str(ROOT / "app" / "ui" / "fonts" / f"{name}.ttf"), 40)
-             for name in ("NotoSerif-Regular", "IBMPlexSans-Regular", "AtkinsonHyperlegible-Regular")}
+    def font(name):  # IBM Plex Sans is shared, from ../tools/fonts
+        own = ROOT / "app" / "ui" / "fonts" / f"{name}.ttf"
+        return QRawFont(str(own if own.exists() else ROOT.parent / "tools" / "fonts" / f"{name}.ttf"), 40)
+
+    fonts = {name: font(name) for name in ("NotoSerif-Regular", "IBMPlexSans-Regular", "AtkinsonHyperlegible-Regular")}
     missing = {}
 
     def need(ch, where, font_names):
@@ -649,14 +653,18 @@ def main() -> int:
 
     qt_args = sys.argv[:1] + ([] if args.show else ["-platform", "offscreen"])
     qapp = QGuiApplication(qt_args)
-    import emulator as E
+    import emulator
 
-    shots = args.shots or (E.BUILD / "test-shots")
+    shots = args.shots or (BUILD / "test-shots")
     for old in shots.glob("*.png") if shots.exists() else []:
         old.unlink()
-    data = E.BUILD / "test-data"
+    data = BUILD / "test-data"
     # Late backend start: the app must cope with AppLoad dropping early messages.
-    emu = E.Emulator(data, fresh=True, scale=1.0, backend_delay=700)
+    emu = emulator.Emulator(ROOT, env={
+        "SPANISH_READER_ROOT": str(ROOT),
+        "SPANISH_READER_DATA": str(data),
+        "SPANISH_READER_EXTRA_STORIES": str(data / "extra-stories"),
+    }, data=data, fresh=True, scale=1.0, backend_delay=700)
     emu.view.show()
     d = Driver(emu, shots)
     d.emu_data = data

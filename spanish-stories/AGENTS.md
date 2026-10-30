@@ -185,24 +185,24 @@ python tools/build.py                   # -> dist/spanish-stories/, .tar.gz, .zi
 
 ## Trying it on a computer (emulator)
 
-`emulator/` runs the real app on your computer as a 1404×1872 reMarkable 2
-screen. It uses the same compiled QML, the same Go backend and the same
-message protocol, with a stand-in for AppLoad. The mouse acts as your finger.
+`../tools/emulator.py` runs the real app on your computer as a 1404×1872
+reMarkable 2 screen (see `../AGENTS.md`). It uses the same compiled QML, the
+same Go backend and the same message protocol, with a stand-in for AppLoad.
+The mouse acts as your finger.
 
 ```bash
-emulator/run_emulator.sh            # macOS / Linux
-emulator\run_emulator.ps1           # Windows
+python3 ../tools/emulator.py . --env SPANISH_READER_DATA=build/emulator/data
 ```
 
-Options: `--fresh` forgets saved progress, and `--verbose` logs every message.
-Press **S** for a screenshot or **Esc** to quit.
+`--verbose` logs every message. Press **S** for a screenshot or **Esc** to
+quit.
 
 Tests:
 
 | Command | What it checks |
 |---|---|
 | `cd backend && go test ./...` | story parsing, progress, library order, the message protocol |
-| `emulator/run_emulator.sh --test` | drives the UI with taps and swipes: library tabs and pages, translations, page turns, page number, toolbar and slider, text settings, the story menu, closing the app, and the layout of every story in every font at the smallest and largest text size; saves screenshots to `build/emulator/test-shots/` |
+| `python3 emulator/test_app.py` | drives the UI with taps and swipes: library tabs and pages, translations, page turns, page number, toolbar and slider, text settings, the story menu, closing the app, and the layout of every story in every font at the smallest and largest text size; saves screenshots to `build/emulator/test-shots/` |
 | `emulator/device_test.sh` (Linux/WSL with `qemu-user`, after `tools/build.py`) | unpacks the zip and tar.gz into a fake `/home/root`, runs the on-tablet `install.sh` / `uninstall.sh`, then runs the installed **ARM** backend under qemu with a fake AppLoad over a real unix `SEQPACKET` socket, for both rM2 (armv7) and Paper Pro (aarch64). Set `BUSYBOX=/path/to/busybox` to use busybox's `unzip` and `sh`, like the tablet. |
 
 ## How it works
@@ -220,7 +220,7 @@ app/
 backend/               Go program started by AppLoad: reads stories, saves progress
 stories/               the bundled stories (+ src/ in the short text format)
 tools/                 build, story converter, validator, icon generator
-emulator/              desktop emulator and tests
+emulator/              UI tests (on ../tools/emulator.py) and device_test.sh
 ```
 
 `install.sh` copies `app/` to `/home/root/xovi/exthome/appload/spanish-reader/`,
@@ -263,12 +263,13 @@ Progress is saved to `/home/root/.local/share/spanish-reader/state.json`.
 
 The backend keeps running after the app closes, and AppLoad reuses it the
 next time; the app never calls `terminate()`, which crashes the tablet's UI
-(see `../AGENTS.md`). `backend/lifecycle.go` makes it exit once an update has
+(see `../AGENTS.md`). `tools/appload/lifecycle.go` makes it exit once an update has
 replaced it and the app is closed.
 
 The fonts are bundled so that `¿ ¡ « » —` and accented letters always render:
 Noto Serif, IBM Plex Sans and Atkinson Hyperlegible (all SIL Open Font
-License).
+License). IBM Plex Sans is shared with Flashcards and the Updater from
+`../tools/fonts/` (`application.qrc` aliases it into `ui/fonts/`).
 
 ## References
 

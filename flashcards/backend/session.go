@@ -162,10 +162,6 @@ func (s *session) rate(rating int, now int64) {
 	s.current = nil
 }
 
-func (s *session) wantsNew(now int64) bool {
-	return s.newLeft(now) > 0
-}
-
 // newLeft is how many more new cards may come in: today's limit, less those
 // already introduced; on AUTO, what brings New + Learning + Due up to the target.
 func (s *session) newLeft(now int64) int {

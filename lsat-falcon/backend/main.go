@@ -8,73 +8,27 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
+
+	"tablet/appload"
 )
 
-func logf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "[lsat-falcon] "+format+"\n", args...)
-}
-
-func appRoot() string {
-	if root := os.Getenv("LSAT_FALCON_ROOT"); root != "" {
-		return root
-	}
-	if exe, err := os.Executable(); err == nil {
-		if exe, err = filepath.EvalSymlinks(exe); err == nil {
-			return filepath.Dir(filepath.Dir(exe))
-		}
-	}
-	wd, _ := os.Getwd()
-	return wd
-}
-
-func statePath() string {
-	dir := os.Getenv("LSAT_FALCON_DATA")
-	if dir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			home = "/home/root"
-		}
-		dir = filepath.Join(home, ".local", "share", "lsat-falcon")
-	}
-	return filepath.Join(dir, "state.json")
-}
+var logf = appload.Logger("lsat-falcon")
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: entry <unix socket path | tcp:host:port>")
-		os.Exit(2)
-	}
-	conn, err := dial(os.Args[1])
-	if err != nil {
-		logf("cannot connect to %s: %v", os.Args[1], err)
-		os.Exit(1)
-	}
-	defer conn.close()
+	conn := appload.Connect(logf)
+	defer conn.Close()
 
-	root := appRoot()
-	app := newApp(filepath.Join(root, "data"), statePath())
+	root := appload.AppRoot("LSAT_FALCON_ROOT")
+	app := newApp(filepath.Join(root, "data"), filepath.Join(appload.DataDir("LSAT_FALCON_DATA", "lsat-falcon"), "state.json"))
 	logf("started; data %s, state %s", app.dataDir, app.statePath)
-	life := newLifecycle(executable(), nil)
-	go life.watch()
-
-	for {
-		msgType, body, err := conn.recv()
-		if err != nil {
-			logf("connection closed: %v", err)
-			return
-		}
-		life.seen(msgType, body)
+	appload.Serve(conn, logf, nil, func(msgType int32, body []byte) {
 		for _, r := range app.handle(msgType, body) {
 			if err := sendChunked(conn, r); err != nil {
+				// A broken connection ends Serve at the next Recv.
 				logf("cannot send reply: %v", err)
 				return
 			}
 		}
-		if msgType == msgSystemTerminate {
-			return
-		}
-	}
+	})
 }
