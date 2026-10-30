@@ -68,7 +68,7 @@ question at a time.
 
 The backend keeps running after the app closes and AppLoad reuses it; the
 app never calls `terminate()`, which crashes the tablet's UI (see
-`../AGENTS.md`). `backend/lifecycle.go` makes it exit once an update has
+`../AGENTS.md`). `tools/apploadrt/lifecycle.go` makes it exit once an update has
 replaced it and the app is closed.
 
 ## Emulator and tests

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apploadrt"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -150,7 +151,7 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 	}
 
 	switch msgType {
-	case msgSystemNewCoordinator, reqList:
+	case apploadrt.MsgNewCoordinator, reqList:
 		return []reply{{respLibrary, a.library()}}
 
 	case reqOpen:
@@ -227,7 +228,7 @@ func (a *App) handle(msgType int32, body []byte) []reply {
 		a.save()
 		return []reply{{respLibrary, a.library()}}
 
-	case msgSystemLostCoordinator, msgSystemTerminate:
+	case apploadrt.MsgLostCoordinator, apploadrt.MsgTerminate:
 		return nil
 	}
 	return []reply{errorReply(msgType, fmt.Sprintf("unknown message type %d", msgType))}

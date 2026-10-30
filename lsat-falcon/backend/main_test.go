@@ -94,9 +94,9 @@ func TestMissingDeck(t *testing.T) {
 
 type recorder struct{ sent [][]byte }
 
-func (r *recorder) recv() (int32, []byte, error) { return 0, nil, nil }
-func (r *recorder) close() error                 { return nil }
-func (r *recorder) send(msgType int32, body []byte) error {
+func (r *recorder) Recv() (int32, []byte, error) { return 0, nil, nil }
+func (r *recorder) Close() error                 { return nil }
+func (r *recorder) Send(msgType int32, body []byte) error {
 	r.sent = append(r.sent, append([]byte(strconv.Itoa(int(msgType))+"|"), body...))
 	return nil
 }

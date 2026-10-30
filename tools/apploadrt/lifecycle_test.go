@@ -1,4 +1,4 @@
-package main
+package apploadrt
 
 import (
 	"os"
@@ -11,13 +11,15 @@ func TestLifecycleExitsOnlyWhenReplacedAndIdle(t *testing.T) {
 	exe := filepath.Join(t.TempDir(), "entry")
 	os.WriteFile(exe, []byte("old"), 0o755)
 	busy := false
-	l := newLifecycle(exe, func() bool { return busy })
+	l := NewLifecycle(func() bool { return busy }, t.Logf)
+	l.exe = exe
+	l.start, _ = os.Stat(exe)
 	now := time.Now()
 
 	if l.shouldExit(now.Add(time.Minute)) {
 		t.Fatal("exits with a frontend attached and nothing replaced")
 	}
-	l.seen(msgSystemLostCoordinator, []byte("0"))
+	l.Seen(MsgLostCoordinator, []byte("0"))
 	if l.shouldExit(time.Now().Add(time.Minute)) {
 		t.Fatal("exits though its binary is unchanged")
 	}
@@ -36,7 +38,7 @@ func TestLifecycleExitsOnlyWhenReplacedAndIdle(t *testing.T) {
 		t.Fatal("exits while busy")
 	}
 	busy = false
-	l.seen(msgSystemNewCoordinator, []byte("1"))
+	l.Seen(MsgNewCoordinator, []byte("1"))
 	if l.shouldExit(time.Now().Add(time.Minute)) {
 		t.Fatal("exits with a frontend attached again")
 	}

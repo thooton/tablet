@@ -18,7 +18,9 @@ has its own `AGENTS.md`; read it before changing that app.
 - `updater/`: Updater, which installs and updates every app here from this
   repository's releases (AppLoad id `updater`).
 - `tools/`: what the apps share: `appbuild.py` (rcc, the Go backend for both
-  CPUs, the release archive) and `emulator.py` (runs any app on a computer), and `make_icons.py`
+  CPUs, the release archive), `apploadrt/` (the Go package every backend imports: AppLoad's sockets and
+  wire format, the exit-after-update lifecycle, the message loop), and
+  `emulator.py` (runs any app on a computer), and `make_icons.py`
   (draws the Biblioteca, Flashcards and Updater icons), and `drive.py`
   (drives an app in `emulator.py --control`, for QA).
 
@@ -101,17 +103,19 @@ versions). The root item needs `signal close` and `function unloading()`,
 and talks to its backend through `AppLoad { applicationID: "<id>" }`
 (`sendMessage(type, json)` / `onMessageReceived`). AppLoad sends the backend
 -2 with the number of frontends when one attaches and -3 when one goes; see
-`spanish-stories/backend/transport.go` for the wire format.
+`tools/apploadrt/transport.go` for the wire format.
 
 **Never call `terminate()` on the AppLoad endpoint, and never let a backend
 exit while its app is open**, though AppLoad's README suggests calling it in
 `unloading()`. Either makes AppLoad unload the app from its socket thread
 instead of the GUI thread, which crashes the tablet's UI and restarts it.
 The backend stays running after the window closes and AppLoad reuses it on
-the next open. Copy `lifecycle.go` from either backend: it exits only when
+the next open. `tools/apploadrt` (the Go module every backend imports) has
+the lifecycle: it exits only when
 install.sh has replaced the binary and no frontend has been attached for a
 few seconds, so an update takes effect on the next open. Backends are Go
-with `CGO_ENABLED=0` and no third-party modules.
+with `CGO_ENABLED=0` and no third-party modules (`tools/apploadrt`, a local
+module each backend's `go.mod` replaces, is the shared code).
 
 After an update AppLoad needs Reload (in its menu, with every app closed)
 before it opens the new QML.

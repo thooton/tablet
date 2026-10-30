@@ -8,14 +8,12 @@
 package main
 
 import (
-	"fmt"
+	"apploadrt"
 	"os"
 	"path/filepath"
 )
 
-func logf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "[lsat-falcon] "+format+"\n", args...)
-}
+var logf = apploadrt.Logger("lsat-falcon")
 
 func appRoot() string {
 	if root := os.Getenv("LSAT_FALCON_ROOT"); root != "" {
@@ -43,38 +41,19 @@ func statePath() string {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: entry <unix socket path | tcp:host:port>")
-		os.Exit(2)
-	}
-	conn, err := dial(os.Args[1])
-	if err != nil {
-		logf("cannot connect to %s: %v", os.Args[1], err)
-		os.Exit(1)
-	}
-	defer conn.close()
+	conn := apploadrt.Connect(logf)
+	defer conn.Close()
 
 	root := appRoot()
 	app := newApp(filepath.Join(root, "data"), statePath())
 	logf("started; data %s, state %s", app.dataDir, app.statePath)
-	life := newLifecycle(executable(), nil)
-	go life.watch()
-
-	for {
-		msgType, body, err := conn.recv()
-		if err != nil {
-			logf("connection closed: %v", err)
-			return
-		}
-		life.seen(msgType, body)
+	apploadrt.Serve(conn, nil, logf, func(msgType int32, body []byte) error {
 		for _, r := range app.handle(msgType, body) {
 			if err := sendChunked(conn, r); err != nil {
 				logf("cannot send reply: %v", err)
-				return
+				return err
 			}
 		}
-		if msgType == msgSystemTerminate {
-			return
-		}
-	}
+		return nil
+	})
 }

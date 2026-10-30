@@ -38,7 +38,7 @@ jobs:
       # writes <dir>/dist/<dir>.tar.gz (see AGENTS.md).
       - name: Test and build
         run: |
-          for mod in */backend/go.mod; do
+          for mod in */backend/go.mod tools/apploadrt/go.mod; do
             (cd "$(dirname "$mod")" && go vet ./... && go test ./...)
           done
           for build in */tools/build.py; do

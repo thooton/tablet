@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apploadrt"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -109,10 +110,10 @@ func (a *App) handle(msgType int32, body []byte) {
 		}
 		json.Unmarshal(body, &req)
 		a.cancelQueued(req.App)
-	case msgState, msgSystemNewCoordinator:
+	case msgState, apploadrt.MsgNewCoordinator:
 		// Opening the Updater checks for updates. The backend outlives the
-		// window (see lifecycle.go), so a reopened one checks again unless
-		// it checked a moment ago or is installing.
+		// window (see tools/apploadrt/lifecycle.go), so a reopened one checks
+		// again unless it checked a moment ago or is installing.
 		a.mu.Lock()
 		stale := !a.working && time.Since(a.checked) > time.Minute
 		a.mu.Unlock()

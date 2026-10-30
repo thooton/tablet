@@ -41,7 +41,7 @@ last try failed, and GET, UPDATE or INSTALL AGAIN). WAITING cancels a
 queued app.
 
 Closing the Updater leaves the backend running (AppLoad reuses it; see
-`backend/lifecycle.go` and "Never call terminate()" in `../AGENTS.md`), so
+`tools/apploadrt/lifecycle.go` and "Never call terminate()" in `../AGENTS.md`), so
 installs carry on, and reopening shows them; it checks again if the last
 check is over a minute old and nothing is installing. Once the Updater has
 updated itself, its old backend exits when the window has been closed for a
@@ -65,9 +65,8 @@ The backend does the same when a frontend attaches (-2).
 
 - `backend/`: `release.go` (manifest.json, downloads), `install.go`
   (versions, unpacking, merging, running install.sh), `app.go` (the state,
-  the queue), `main.go`, `lifecycle.go` (when to exit after an update),
-  `transport.go` (AppLoad's protocol). The last two are the same as Spanish
-  Reader's. `UPDATER_HOME`, `UPDATER_APPLOAD` and `UPDATER_RELEASE`
+  the queue), `main.go` (AppLoad's protocol and when to exit after an update are
+  `tools/apploadrt`). `UPDATER_HOME`, `UPDATER_APPLOAD` and `UPDATER_RELEASE`
   override `/home/root`, the AppLoad folder and the release URL, for tests
   and the emulator.
 - `app/ui/`: `main.qml` (header, notices, the paged list), `components/`
@@ -96,4 +95,4 @@ UPDATER_MACHINE=armv7 SPANISH_READER_MACHINE=armv7 python3 tools/emulator.py upd
 
 (`*_MACHINE` makes install.sh pick a tablet backend on a PC.) The real
 tablet differences, TLS to GitHub and the SEQPACKET socket, are covered by
-Go's own TLS (it reads `/etc/ssl/certs`) and `packet_linux_test.go`.
+Go's own TLS (it reads `/etc/ssl/certs`) and `tools/apploadrt`'s tests.

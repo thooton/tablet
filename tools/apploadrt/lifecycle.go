@@ -1,4 +1,4 @@
-package main
+package apploadrt
 
 import (
 	"os"
@@ -20,26 +20,32 @@ import (
 
 const idleBeforeExit = 5 * time.Second
 
-type lifecycle struct {
+// Lifecycle tracks the attached frontends and exits the process after an
+// update.
+type Lifecycle struct {
 	mu        sync.Mutex
 	frontends int
 	idleSince time.Time
 	exe       string
 	start     os.FileInfo
 	busy      func() bool // work that must finish first, such as an install
+	logf      func(format string, args ...any)
 }
 
-func newLifecycle(exe string, busy func() bool) *lifecycle {
-	l := &lifecycle{frontends: 1, exe: exe, busy: busy}
+// NewLifecycle watches the running binary; busy (may be nil) says whether
+// work that must finish first is going on.
+func NewLifecycle(busy func() bool, logf func(string, ...any)) *Lifecycle {
+	exe, _ := os.Executable()
+	l := &Lifecycle{frontends: 1, exe: exe, busy: busy, logf: logf}
 	if exe != "" {
 		l.start, _ = os.Stat(exe)
 	}
 	return l
 }
 
-// seen notes AppLoad's -2 and -3, whose body is how many frontends remain.
-func (l *lifecycle) seen(msgType int32, body []byte) {
-	if msgType != msgSystemNewCoordinator && msgType != msgSystemLostCoordinator {
+// Seen notes AppLoad's -2 and -3, whose body is how many frontends remain.
+func (l *Lifecycle) Seen(msgType int32, body []byte) {
+	if msgType != MsgNewCoordinator && msgType != MsgLostCoordinator {
 		return
 	}
 	n, err := strconv.Atoi(string(body))
@@ -56,7 +62,7 @@ func (l *lifecycle) seen(msgType int32, body []byte) {
 
 // replaced is whether the file the backend started from is gone or is now
 // another file.
-func (l *lifecycle) replaced() bool {
+func (l *Lifecycle) replaced() bool {
 	if l.start == nil {
 		return false
 	}
@@ -64,27 +70,19 @@ func (l *lifecycle) replaced() bool {
 	return err != nil || !os.SameFile(l.start, now)
 }
 
-func (l *lifecycle) shouldExit(now time.Time) bool {
+func (l *Lifecycle) shouldExit(now time.Time) bool {
 	l.mu.Lock()
 	idle := l.frontends == 0 && now.Sub(l.idleSince) >= idleBeforeExit
 	l.mu.Unlock()
 	return idle && (l.busy == nil || !l.busy()) && l.replaced()
 }
 
-// watch exits the process once shouldExit says so.
-func (l *lifecycle) watch() {
+// Watch exits the process once shouldExit says so.
+func (l *Lifecycle) Watch() {
 	for range time.Tick(2 * time.Second) {
 		if l.shouldExit(time.Now()) {
-			logf("updated on disk and no frontend attached: exiting so the next open starts the new version")
+			l.logf("updated on disk and no frontend attached: exiting so the next open starts the new version")
 			os.Exit(0)
 		}
 	}
-}
-
-func executable() string {
-	exe, err := os.Executable()
-	if err != nil {
-		return ""
-	}
-	return exe
 }

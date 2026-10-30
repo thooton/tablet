@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apploadrt"
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
@@ -326,7 +327,7 @@ func TestDoneMarkClears(t *testing.T) {
 
 	// Reopening a moment later (what AppLoad and the UI send on opening)
 	// shows the state as it is: DONE stays.
-	app.handle(msgSystemNewCoordinator, []byte("1"))
+	app.handle(apploadrt.MsgNewCoordinator, []byte("1"))
 	app.handle(msgState, nil)
 	time.Sleep(200 * time.Millisecond)
 	if s := rec.last(); s.Checking || find(s, "demo").Job == nil || find(s, "demo").Job.Phase != "done" {

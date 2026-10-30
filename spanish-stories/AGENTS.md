@@ -263,7 +263,7 @@ Progress is saved to `/home/root/.local/share/spanish-reader/state.json`.
 
 The backend keeps running after the app closes, and AppLoad reuses it the
 next time; the app never calls `terminate()`, which crashes the tablet's UI
-(see `../AGENTS.md`). `backend/lifecycle.go` makes it exit once an update has
+(see `../AGENTS.md`). `tools/apploadrt/lifecycle.go` makes it exit once an update has
 replaced it and the app is closed.
 
 The fonts are bundled so that `¿ ¡ « » —` and accented letters always render:
