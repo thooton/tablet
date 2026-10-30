@@ -8,29 +8,14 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"tablet/appload"
 )
 
-func logf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "[spanish-reader] "+format+"\n", args...)
-}
-
-func appRoot() string {
-	if root := os.Getenv("SPANISH_READER_ROOT"); root != "" {
-		return root
-	}
-	if exe, err := os.Executable(); err == nil {
-		if exe, err = filepath.EvalSymlinks(exe); err == nil {
-			return filepath.Dir(filepath.Dir(exe))
-		}
-	}
-	wd, _ := os.Getwd()
-	return wd
-}
+var logf = appload.Logger("spanish-reader")
 
 func storyDirs(root string) []string {
 	dirs := []string{filepath.Join(root, "stories")}
@@ -42,59 +27,17 @@ func storyDirs(root string) []string {
 	return dirs
 }
 
-func statePath() string {
-	dir := os.Getenv("SPANISH_READER_DATA")
-	if dir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			home = "/home/root"
-		}
-		dir = filepath.Join(home, ".local", "share", "spanish-reader")
-	}
-	return filepath.Join(dir, "state.json")
-}
-
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: entry <unix socket path | tcp:host:port>")
-		os.Exit(2)
-	}
-	conn, err := dial(os.Args[1])
-	if err != nil {
-		logf("cannot connect to %s: %v", os.Args[1], err)
-		os.Exit(1)
-	}
-	defer conn.close()
+	conn := appload.Connect(logf)
+	defer conn.Close()
 
-	root := appRoot()
-	app := newApp(storyDirs(root), statePath())
+	root := appload.AppRoot("SPANISH_READER_ROOT")
+	app := newApp(storyDirs(root), filepath.Join(appload.DataDir("SPANISH_READER_DATA", "spanish-reader"), "state.json"))
 	logf("started; app root %s, state %s", root, app.statePath)
-	life := newLifecycle(executable(), nil)
-	go life.watch()
-
-	for {
-		msgType, body, err := conn.recv()
-		if err != nil {
-			logf("connection closed: %v", err)
-			return
-		}
-		life.seen(msgType, body)
+	send := appload.JSONSender(conn, logf)
+	appload.Serve(conn, logf, nil, func(msgType int32, body []byte) {
 		for _, r := range app.handle(msgType, body) {
-			data, err := json.Marshal(r.Body)
-			if err != nil {
-				logf("cannot encode reply: %v", err)
-				continue
-			}
-			// Never exit here: a backend that quits while its app is
-			// open crashes the tablet's UI. A broken connection ends the
-			// loop at the next recv.
-			if err := conn.send(r.Type, data); err != nil {
-				logf("cannot send reply %d (%d bytes): %v", r.Type, len(data), err)
-				break
-			}
+			send(r.Type, r.Body)
 		}
-		if msgType == msgSystemTerminate {
-			return
-		}
-	}
+	})
 }

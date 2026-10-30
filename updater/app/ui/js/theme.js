@@ -7,9 +7,6 @@ var paper = "#ffffff";
 var ink = "#000000";
 var rule = "#c9c8c3";
 
-var screenWidth = 1404;
-var screenHeight = 1872;
-
 var headHeight = 137;        // toolbar row, including its 3 px rule
 var headPad = 45;
 var margin = 60;

@@ -11,19 +11,19 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from PySide6.QtCore import QObject, QPoint, QPointF, Qt  # noqa: E402
+from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QJSValue  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-import emulator  # noqa: E402
+from test_app import BUILD, open_app  # noqa: E402
 
 
 def main():
     out = Path(sys.argv[1])
     steps = sys.argv[2:]
     app = QGuiApplication(sys.argv[:1])
-    emu = emulator.Emulator(emulator.BUILD / "snap-state", fresh="--keep" not in steps, scale=1.0)
+    emu = open_app(BUILD / "snap-state", fresh="--keep" not in steps)
     steps = [s for s in steps if s != "--keep"]
     emu.view.show()
     end = time.time() + 20

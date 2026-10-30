@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"tablet/appload"
 	"time"
 )
 
@@ -44,7 +45,7 @@ func (c *center) login() login {
 		json.Unmarshal(data, &l)
 	}
 	if l.Server == "" {
-		l.Server = env("FLASHCARDS_SERVER", defaultServer)
+		l.Server = appload.Env("FLASHCARDS_SERVER", defaultServer)
 	}
 	return l
 }

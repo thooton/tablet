@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -200,57 +199,6 @@ func TestLibraryOrder(t *testing.T) {
 	}
 	if strings.Join(got, " ") != "02-b 03-c 01-a 04-d" {
 		t.Fatalf("library order: %v", got)
-	}
-}
-
-// End to end over the TCP framing used by the emulator.
-func TestStreamTransport(t *testing.T) {
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ln.Close()
-	done := make(chan transport)
-	go func() {
-		c, err := dial("tcp:" + ln.Addr().String())
-		if err != nil {
-			t.Error(err)
-		}
-		done <- c
-	}()
-	server, err := ln.Accept()
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := <-done
-	srv := &streamTransport{conn: server}
-	if err := srv.send(reqList, []byte(`{"a":1}`)); err != nil {
-		t.Fatal(err)
-	}
-	typ, body, err := client.recv()
-	if err != nil || typ != reqList || string(body) != `{"a":1}` {
-		t.Fatalf("got %d %q %v", typ, body, err)
-	}
-	if err := client.send(msgSystemTerminate, []byte("close")); err != nil {
-		t.Fatal(err)
-	}
-	typ, body, err = srv.recv()
-	if err != nil || typ != -1 || string(body) != "close" {
-		t.Fatalf("got %d %q %v", typ, body, err)
-	}
-}
-
-func TestHeaderEncoding(t *testing.T) {
-	h := encodeHeader(-2, 300)
-	if !reflect.DeepEqual(h, []byte{0xfe, 0xff, 0xff, 0xff, 0x2c, 0x01, 0, 0}) {
-		t.Fatalf("header bytes %v", h)
-	}
-	typ, n, err := decodeHeader(h)
-	if err != nil || typ != -2 || n != 300 {
-		t.Fatal("decode mismatch")
-	}
-	if _, _, err := decodeHeader(encodeHeader(1, maxMessageLength+1)); err == nil {
-		t.Fatal("oversized message accepted")
 	}
 }
 

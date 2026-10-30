@@ -2,3 +2,7 @@ dist/
 build/
 __pycache__/
 *.pyc
+/*/backend/backend
+/*/backend/*.exe
+# written by lsat-falcon/tools/build.py from what is in app/ui
+/lsat-falcon/app/application.qrc

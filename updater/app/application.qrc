@@ -11,9 +11,9 @@
         <file>ui/js/theme.js</file>
         <file>ui/images/back.png</file>
         <file>ui/images/close.png</file>
-        <file>ui/fonts/IBMPlexSans-Regular.ttf</file>
-        <file>ui/fonts/IBMPlexSans-Medium.ttf</file>
-        <file>ui/fonts/IBMPlexSans-SemiBold.ttf</file>
-        <file>ui/fonts/IBMPlexSans-Bold.ttf</file>
+        <file alias="ui/fonts/IBMPlexSans-Regular.ttf">../../tools/fonts/IBMPlexSans-Regular.ttf</file>
+        <file alias="ui/fonts/IBMPlexSans-Medium.ttf">../../tools/fonts/IBMPlexSans-Medium.ttf</file>
+        <file alias="ui/fonts/IBMPlexSans-SemiBold.ttf">../../tools/fonts/IBMPlexSans-SemiBold.ttf</file>
+        <file alias="ui/fonts/IBMPlexSans-Bold.ttf">../../tools/fonts/IBMPlexSans-Bold.ttf</file>
     </qresource>
 </RCC>

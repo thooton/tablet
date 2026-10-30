@@ -68,14 +68,15 @@ question at a time.
 
 The backend keeps running after the app closes and AppLoad reuses it; the
 app never calls `terminate()`, which crashes the tablet's UI (see
-`../AGENTS.md`). `backend/lifecycle.go` makes it exit once an update has
+`../AGENTS.md`). `tools/appload/lifecycle.go` makes it exit once an update has
 replaced it and the app is closed.
 
 ## Emulator and tests
 
 ```bash
-emulator/run_emulator.sh            # the app in a 1404 × 1872 window; mouse = finger, S = screenshot
-emulator/run_emulator.sh --test     # end-to-end UI test, screenshots in build/emulator/test-shots/
+python3 tools/build_data.py --out build/data   # once: the deck, where the emulator's backend looks
+python3 ../tools/emulator.py . --env LSAT_FALCON_DATA=build/emulator/state   # mouse = finger, S = screenshot
+python3 emulator/test_app.py        # end-to-end UI test, screenshots in build/emulator/test-shots/
 cd backend && go test ./...         # backend: deck, state, chunking
 python3 emulator/fake_appload.py APP_DIR DATA_DIR   # the real unix-socket protocol
 ```
